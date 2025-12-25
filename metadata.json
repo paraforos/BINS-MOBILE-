@@ -1,0 +1,7 @@
+{
+  "name": "Bins Damage Reporter",
+  "description": "A mobile-first application for reporting damaged bins, featuring step-by-step input, image capture with compression, and PDF report generation.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera, Trash2, FileText, CheckCircle2, Loader2, RefreshCcw, Settings, Plus, ArrowLeft, Edit2, Check, X, Download, Upload, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Camera, Trash2, FileText, CheckCircle2, Loader2, RefreshCcw, Settings, Plus, ArrowLeft, Edit2, Check, X, Download, Upload } from 'lucide-react';
 import { BinReportData, Step, AppView } from './types';
 import { compressImage } from './services/imageService';
 import StepLayout from './components/StepLayout';
@@ -58,10 +58,15 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const get = (k: string) => localStorage.getItem(k);
-    setSuppliers(JSON.parse(get('aspis_suppliers') || JSON.stringify(DEFAULT_LISTS.suppliers)));
-    setDrivers(JSON.parse(get('aspis_drivers') || JSON.stringify(DEFAULT_LISTS.drivers)));
-    setProducts(JSON.parse(get('aspis_products') || JSON.stringify(DEFAULT_LISTS.products)));
-    setPredefinedComments(JSON.parse(get('aspis_comments') || JSON.stringify(DEFAULT_LISTS.predefinedComments)));
+    const savedSuppliers = get('aspis_suppliers');
+    const savedDrivers = get('aspis_drivers');
+    const savedProducts = get('aspis_products');
+    const savedComments = get('aspis_comments');
+
+    setSuppliers(savedSuppliers ? JSON.parse(savedSuppliers) : DEFAULT_LISTS.suppliers);
+    setDrivers(savedDrivers ? JSON.parse(savedDrivers) : DEFAULT_LISTS.drivers);
+    setProducts(savedProducts ? JSON.parse(savedProducts) : DEFAULT_LISTS.products);
+    setPredefinedComments(savedComments ? JSON.parse(savedComments) : DEFAULT_LISTS.predefinedComments);
     
     const draft = get('aspis_draft_report');
     if (draft) try { setFormData(JSON.parse(draft)); } catch(e) {}
@@ -73,24 +78,24 @@ const App: React.FC = () => {
     if (formData !== INITIAL_DATA) localStorage.setItem('aspis_draft_report', JSON.stringify(formData));
   }, [formData]);
 
-  const save = (t: any, l: any) => localStorage.setItem(t === 'comments' ? 'aspis_comments' : `aspis_${t}`, JSON.stringify(l));
+  const saveList = (type: any, list: any) => {
+    localStorage.setItem(type === 'comments' ? 'aspis_comments' : `aspis_${type}`, JSON.stringify(list));
+  };
 
   const handleAddItem = (type: any) => {
     if (!newItemText.trim()) return;
     const item = newItemText.trim().toUpperCase();
-    let list: string[] = [];
-    if (type === 'suppliers') list = suppliers;
-    else if (type === 'drivers') list = drivers;
-    else if (type === 'products') list = products;
-    else list = predefinedComments;
+    let currentList = type === 'suppliers' ? suppliers : type === 'drivers' ? drivers : type === 'products' ? products : predefinedComments;
     
-    if (list.includes(item)) return;
-    const next = [...list, item];
-    if (type === 'suppliers') setSuppliers(next);
-    else if (type === 'drivers') setDrivers(next);
-    else if (type === 'products') setProducts(next);
-    else setPredefinedComments(next);
-    save(type, next);
+    if (currentList.includes(item)) return;
+    const nextList = [...currentList, item];
+    
+    if (type === 'suppliers') setSuppliers(nextList);
+    else if (type === 'drivers') setDrivers(nextList);
+    else if (type === 'products') setProducts(nextList);
+    else setPredefinedComments(nextList);
+    
+    saveList(type, nextList);
     setNewItemText('');
   };
 
@@ -98,14 +103,29 @@ const App: React.FC = () => {
     if (!pdfRef.current || isGenerating) return;
     setIsGenerating(true);
     try {
-      const canvas = await window.html2canvas(pdfRef.current, { scale: 1.2, useCORS: true, backgroundColor: '#ffffff' });
+      const canvas = await window.html2canvas(pdfRef.current, { scale: 1.5, useCORS: true, backgroundColor: '#e5e7eb' });
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgData = canvas.toDataURL('image/jpeg', 0.6);
-      pdf.addImage(imgData, 'JPEG', 0, 0, 210, (canvas.height * 210) / canvas.width);
+      
+      const imgData = canvas.toDataURL('image/jpeg', 0.8);
+      const pageWidth = 210;
+      const pageHeight = 297;
+      const canvasWidth = canvas.width;
+      const canvasHeight = canvas.height;
+      const imgHeight = (canvasHeight * pageWidth) / canvasWidth;
+
+      // Πρώτη Σελίδα
+      pdf.addImage(imgData, 'JPEG', 0, 0, pageWidth, pageHeight, undefined, 'FAST', 0);
+      
+      // Δεύτερη Σελίδα (αν το ύψος του καμβά υπερβαίνει τη μία σελίδα)
+      if (formData.photos.length > 4) {
+        pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, -pageHeight, pageWidth, pageHeight, undefined, 'FAST', 0);
+      }
+
       pdf.save(`ASPIS_REPORT_${new Date().toISOString().split('T')[0]}.pdf`);
       localStorage.removeItem('aspis_draft_report');
-    } catch (e) { alert("Σφάλμα μνήμης!"); }
+    } catch (e) { alert("Σφάλμα μνήμης κατά την έκδοση PDF!"); }
     finally { setIsGenerating(false); }
   };
 
@@ -138,7 +158,7 @@ const App: React.FC = () => {
     <div className="flex flex-col h-screen bg-white">
       <header className="p-5 border-b-4 border-black flex items-center gap-4">
         <button onClick={() => setView(AppView.Reporter)} className="p-2 border-2 border-black rounded-xl"><ArrowLeft size={24} /></button>
-        <h1 className="text-xl font-black uppercase">ΡΥΘΜΙΣΕΙΣ</h1>
+        <h1 className="text-xl font-black uppercase">ΡΥΘΜΙΣΕΙΣ ΛΙΣΤΩΝ</h1>
       </header>
       <main className="flex-1 p-5 overflow-hidden flex flex-col gap-4">
         <div className="flex gap-1 bg-gray-100 p-1 rounded-xl overflow-x-auto no-scrollbar">
@@ -149,10 +169,10 @@ const App: React.FC = () => {
           ))}
         </div>
         <div className="flex gap-2">
-          <input value={newItemText} onChange={e => setNewItemText(e.target.value)} className="flex-1 p-4 border-4 border-gray-100 rounded-2xl focus:border-black outline-none uppercase font-black" placeholder="ΠΡΟΣΘΗΚΗ..." />
+          <input value={newItemText} onChange={e => setNewItemText(e.target.value)} className="flex-1 p-4 border-4 border-gray-100 rounded-2xl focus:border-black outline-none uppercase font-black" placeholder="ΠΡΟΣΘΗΚΗ ΝΕΟΥ..." />
           <button onClick={() => handleAddItem(activeMgmtTab)} className="bg-black text-white p-4 rounded-2xl"><Plus size={32} /></button>
         </div>
-        <div className="flex-1 overflow-y-auto space-y-2 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto space-y-2 custom-scrollbar pb-10">
           {(activeMgmtTab === 'suppliers' ? suppliers : activeMgmtTab === 'drivers' ? drivers : activeMgmtTab === 'products' ? products : predefinedComments).map((item, i) => (
             <div key={i} className="p-4 bg-gray-50 rounded-xl border-2 border-gray-100 flex justify-between items-center font-black uppercase text-sm">
               <span>{item}</span>
@@ -163,8 +183,8 @@ const App: React.FC = () => {
                 else if(activeMgmtTab==='drivers') { next = drivers.filter((_,idx)=>idx!==i); setDrivers(next); }
                 else if(activeMgmtTab==='products') { next = products.filter((_,idx)=>idx!==i); setProducts(next); }
                 else { next = predefinedComments.filter((_,idx)=>idx!==i); setPredefinedComments(next); }
-                save(activeMgmtTab, next);
-              }} className="text-red-600"><Trash2 size={20} /></button>
+                saveList(activeMgmtTab, next);
+              }} className="text-red-600 p-2"><Trash2 size={20} /></button>
             </div>
           ))}
         </div>
@@ -190,7 +210,7 @@ const App: React.FC = () => {
           <div className="grid grid-cols-3 gap-2 mt-6">
             {formData.photos.map((p, i) => <img key={i} src={p} className="aspect-square object-cover rounded-xl border-2 border-gray-100" />)}
           </div>
-          <footer className="fixed bottom-0 left-0 right-0 p-6 bg-white border-t-4 border-gray-100 flex flex-col gap-3">
+          <footer className="fixed bottom-0 left-0 right-0 p-6 bg-white border-t-4 border-gray-100 flex flex-col gap-3 z-50 shadow-2xl">
             <button onClick={generatePDF} disabled={isGenerating} className="w-full py-6 bg-black text-white rounded-[2rem] font-black text-2xl flex items-center justify-center gap-4 active:scale-95 disabled:opacity-50 shadow-xl">
               {isGenerating ? <Loader2 className="animate-spin" size={32} /> : <FileText size={32} />} ΕΚΔΟΣΗ PDF
             </button>
@@ -230,10 +250,9 @@ const App: React.FC = () => {
                 </div>
               ))}
               {formData.photos.length < 9 && (
-                <label className="aspect-square border-4 border-dashed border-black rounded-2xl flex flex-col items-center justify-center bg-gray-50 active:bg-gray-200">
+                <label className="aspect-square border-4 border-dashed border-black rounded-2xl flex flex-col items-center justify-center bg-gray-50 active:bg-gray-200 cursor-pointer">
                   <Camera size={40} />
                   <input type="file" className="hidden" accept="image/*" capture="environment" multiple onChange={async e => {
-                    // Fix: Explicitly cast the files array to File[] to avoid 'unknown' type error in compressImage on line 240
                     const files = Array.from(e.target.files || []).slice(0, 9 - formData.photos.length) as File[];
                     setIsUploading(true);
                     try {
@@ -245,9 +264,23 @@ const App: React.FC = () => {
               )}
             </div>
           ) : (
-            <textarea rows={4} className="w-full p-6 border-4 border-gray-100 rounded-[2rem] outline-none font-black text-xl uppercase bg-gray-50 focus:border-black" placeholder="ΓΡΑΨΤΕ ΕΔΩ..." value={formData.comments} onChange={e => setFormData(p => ({ ...p, comments: e.target.value.toUpperCase() }))} />
+            <div className="space-y-6">
+              <textarea rows={3} className="w-full p-6 border-4 border-gray-100 rounded-[2rem] outline-none font-black text-xl uppercase bg-gray-50 focus:border-black" placeholder="ΓΡΑΨΤΕ ΕΔΩ..." value={formData.comments} onChange={e => setFormData(p => ({ ...p, comments: e.target.value.toUpperCase() }))} />
+              <div className="grid grid-cols-1 gap-3">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">ΠΡΟΤΕΙΝΟΜΕΝΑ:</p>
+                {predefinedComments.map((c, i) => (
+                  <button key={i} onClick={() => {
+                    const current = formData.comments.trim();
+                    setFormData(p => ({ ...p, comments: current ? `${current}, ${c}`.toUpperCase() : c.toUpperCase() }));
+                  }} className="w-full p-5 rounded-2xl text-left font-black uppercase transition-all bg-white border-2 border-gray-100 active:border-yellow-400 flex items-center gap-3">
+                    <Plus size={20} className="text-yellow-600" />
+                    <span className="text-sm">{c}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
           )}
-          {isUploading && <div className="mt-4 p-4 bg-yellow-400 text-black font-black text-center rounded-2xl animate-pulse">ΕΠΕΞΕΡΓΑΣΙΑ...</div>}
+          {isUploading && <div className="mt-4 p-4 bg-yellow-400 text-black font-black text-center rounded-2xl animate-pulse">ΕΠΕΞΕΡΓΑΣΙΑ ΦΩΤΟΓΡΑΦΙΩΝ...</div>}
         </StepLayout>
       )}
       <PDFTemplate data={formData} reportRef={pdfRef} />

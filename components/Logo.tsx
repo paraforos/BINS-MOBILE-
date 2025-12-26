@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 
 export const Logo: React.FC<{ className?: string }> = ({ className = "" }) => {
@@ -8,7 +7,7 @@ export const Logo: React.FC<{ className?: string }> = ({ className = "" }) => {
     <div className={`flex items-center justify-center overflow-hidden ${className}`}>
       {!error ? (
         <img 
-          src="aspis_logo2.png" 
+          src="aspislogo.png" 
           alt="ASPIS" 
           className="h-full w-auto object-contain"
           onError={() => setError(true)}

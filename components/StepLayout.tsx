@@ -75,9 +75,13 @@ const StepLayout: React.FC<StepLayoutProps> = ({
         </div>
       </main>
 
-      <div className="fixed bottom-4 left-6 right-6 pointer-events-none opacity-20 flex justify-between items-center">
-        <span className="text-[10px] font-black text-[#003d71] uppercase tracking-[0.3em]">ASPIS QUALITY</span>
-        <span className="text-[10px] font-black text-[#003d71] uppercase tracking-[0.3em]">{stepIndex + 1}/{totalSteps}</span>
+      <div className="fixed bottom-2 left-6 right-6 pointer-events-none flex flex-col items-center gap-1 opacity-20">
+        <div className="w-full flex justify-end items-center">
+          <span className="text-[8px] font-black text-[#003d71] uppercase tracking-[0.3em]">{stepIndex + 1}/{totalSteps}</span>
+        </div>
+        <div className="text-[5px] font-black text-[#003d71] uppercase tracking-tight text-center leading-tight mt-0.5">
+          © 2025 Michalis Paraforos<br />ΑΝΑΦΟΡΑ ΣΠΑΣΜΕΝΩΝ BINS
+        </div>
       </div>
     </div>
   );

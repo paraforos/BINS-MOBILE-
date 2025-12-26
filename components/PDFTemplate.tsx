@@ -82,9 +82,12 @@ const PDFTemplate: React.FC<PDFTemplateProps> = ({ data, reportRef }) => {
         </div>
 
         {/* Footer */}
-        <div className="mt-12 pt-8 border-t border-gray-100 flex justify-center items-end">
+        <div className="mt-12 pt-8 border-t border-gray-100 flex flex-col items-center gap-1">
           <div className="text-[10px] text-gray-400 text-center font-medium">
             <p>Η ΑΝΑΦΟΡΑ ΣΤΑΛΘΗΚΕ ΑΠΟ agronomist@aspis.gr</p>
+          </div>
+          <div className="text-[6px] text-gray-300 font-black uppercase tracking-tight text-center leading-tight">
+            © 2025 Michalis Paraforos<br />ΑΝΑΦΟΡΑ ΣΠΑΣΜΕΝΩΝ BINS
           </div>
         </div>
       </div>

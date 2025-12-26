@@ -21,12 +21,12 @@ const PDFTemplate: React.FC<PDFTemplateProps> = ({ data, reportRef }) => {
         <div className="flex justify-between items-center mb-6">
           <Logo className="h-20 w-auto" />
           <div className="text-right">
-            <h1 className="text-xl font-black text-blue-900 uppercase">ΑΝΑΦΟΡΑ ΠΟΙΟΤΗΤΑΣ BINS</h1>
-            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Document ID: ASP-{Date.now().toString(36).toUpperCase()}</p>
+            <h1 className="text-xl font-black text-[#003d71] uppercase">ΑΝΑΦΟΡΑ ΣΠΑΣΜΕΝΩΝ BINS</h1>
+            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">DOCUMENT ID: ASP-{Date.now().toString(36).toUpperCase()}</p>
           </div>
         </div>
 
-        <div className="h-0.5 w-full bg-blue-900 mb-8" />
+        <div className="h-0.5 w-full bg-[#003d71] mb-8" />
 
         {/* Info Grid */}
         <div className="grid grid-cols-2 gap-x-12 gap-y-6 mb-10">
@@ -58,8 +58,8 @@ const PDFTemplate: React.FC<PDFTemplateProps> = ({ data, reportRef }) => {
 
         {/* Photos Section */}
         <div className="flex-1">
-          <h2 className="text-[11px] font-black uppercase text-blue-900 mb-4 border-l-4 border-blue-900 pl-2">
-            ΦΩΤΟΓΡΑΦΙΚΗ ΤΕΚΜΗΡΙΩΣΗ ΖΗΜΙΩΝ
+          <h2 className="text-[11px] font-black uppercase text-[#003d71] mb-4 border-l-4 border-[#003d71] pl-2">
+            ΦΩΤΟΓΡΑΦΙΕΣ ΠΑΡΤΙΔΑΣ
           </h2>
           <div className="grid grid-cols-2 gap-4">
             {data.photos.map((photo, index) => (
@@ -86,7 +86,7 @@ const PDFTemplate: React.FC<PDFTemplateProps> = ({ data, reportRef }) => {
         <div className="mt-12 pt-8 border-t border-gray-100 flex justify-between items-end">
           <div className="text-[8px] text-gray-400 space-y-1">
             <p className="font-bold uppercase">ASPIS S.A. QUALITY ASSURANCE SYSTEM</p>
-            <p>Η παρούσα αναφορά παράχθηκε αυτόματα από την εφαρμογή Bins Damage Reporter.</p>
+            <p>Η ΑΝΑΦΟΡΑ ΣΤΑΛΘΗΚΕ ΑΠΟ agronomist@aspis.gr</p>
           </div>
           <div className="w-40 border-t border-gray-300 pt-1 text-center">
             <p className="text-[8px] font-bold text-gray-400 uppercase">ΥΠΟΓΡΑΦΗ ΕΛΕΓΚΤΗ</p>

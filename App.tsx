@@ -224,7 +224,7 @@ const App: React.FC = () => {
             <main className="flex-1 px-6 pt-8 space-y-8 pb-40">
               <div className="bg-[#003d71] rounded-[2.5rem] p-8 text-white shadow-2xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none"><CheckCircle2 size={120} /></div>
-                <h2 className="text-[10px] font-black uppercase tracking-[0.4em] mb-8 text-blue-200/60">Σύνοψη Αναφοράς</h2>
+                <h2 className="text-[10px] font-black uppercase tracking-[0.4em] mb-8 text-blue-200/60">ΑΝΑΦΟΡΑ ΣΠΑΣΜΕΝΩΝ BINS</h2>
                 
                 <div className="space-y-8 relative z-10">
                   <div>

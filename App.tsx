@@ -388,12 +388,9 @@ const App: React.FC = () => {
           <Logo className="scale-125 mb-4" />
           <Loader2 className="animate-spin text-[#003d71] mb-12" size={24} />
         </div>
-        <div className="absolute bottom-12 text-center px-4 w-full">
-          <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">
-            © 2025 Michalis Paraforos
-          </p>
-          <p className="text-[7px] font-bold text-gray-300 uppercase tracking-[0.2em] mt-1">
-            Αναφορά Σπασμένων Bins
+        <div className="absolute bottom-0 left-0 right-0 bg-black py-3 px-4 text-center">
+          <p className="text-[6px] font-black text-white uppercase tracking-widest leading-tight">
+            © 2025 Michalis Paraforos - ΑΝΑΦΟΡΑ ΣΠΑΣΜΕΝΩΝ BINS
           </p>
         </div>
       </div>
@@ -576,16 +573,19 @@ const App: React.FC = () => {
                 </div>
               )}
             </main>
-            <footer className="fixed bottom-0 left-0 right-0 p-5 bg-white/95 backdrop-blur-md border-t border-gray-100 flex flex-col gap-2 z-30">
-              <button onClick={generatePDF} disabled={isGenerating} className="w-full py-4 bg-[#003d71] text-white rounded-2xl font-black text-base flex items-center justify-center gap-2 shadow-lg active:scale-95 disabled:opacity-50 transition-all">
-                {isGenerating ? <Loader2 className="animate-spin" /> : <FileText size={20} />} ΕΚΔΟΣΗ PDF
-              </button>
-              <button onClick={() => { localStorage.removeItem('aspis_draft_report'); window.location.reload(); }} className="text-gray-400 font-black text-[9px] uppercase text-center tracking-widest py-1 flex items-center justify-center gap-1">
-                <RefreshCcw size={10} /> Νέα Αναφορά
-              </button>
-              <div className="text-center leading-tight mt-2">
-                <p className="text-[4px] font-black text-gray-300 uppercase tracking-tight">© 2025 Michalis Paraforos</p>
-                <p className="text-[4px] font-black text-gray-300 uppercase tracking-tight">ΑΝΑΦΟΡΑ ΣΠΑΣΜΕΝΩΝ BINS</p>
+            <footer className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-100 z-30">
+              <div className="p-5 flex flex-col gap-2">
+                <button onClick={generatePDF} disabled={isGenerating} className="w-full py-4 bg-[#003d71] text-white rounded-2xl font-black text-base flex items-center justify-center gap-2 shadow-lg active:scale-95 disabled:opacity-50 transition-all">
+                  {isGenerating ? <Loader2 className="animate-spin" /> : <FileText size={20} />} ΕΚΔΟΣΗ PDF
+                </button>
+                <button onClick={() => { localStorage.removeItem('aspis_draft_report'); window.location.reload(); }} className="text-gray-400 font-black text-[9px] uppercase text-center tracking-widest py-1 flex items-center justify-center gap-1">
+                  <RefreshCcw size={10} /> Νέα Αναφορά
+                </button>
+              </div>
+              <div className="bg-black py-2 px-4 text-center">
+                <p className="text-[6px] font-black text-white uppercase tracking-widest leading-none">
+                  © 2025 Michalis Paraforos - ΑΝΑΦΟΡΑ ΣΠΑΣΜΕΝΩΝ BINS
+                </p>
               </div>
             </footer>
             <PDFTemplate data={formData} reportRef={pdfRef} />

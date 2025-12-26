@@ -75,12 +75,15 @@ const StepLayout: React.FC<StepLayoutProps> = ({
         </div>
       </main>
 
-      <div className="fixed bottom-2 left-6 right-6 pointer-events-none flex flex-col items-center gap-1 opacity-20">
-        <div className="w-full flex justify-end items-center">
-          <span className="text-[8px] font-black text-[#003d71] uppercase tracking-[0.3em]">{stepIndex + 1}/{totalSteps}</span>
+      {/* Footer bar with white text on black background */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-black flex flex-col items-center">
+        <div className="w-full flex justify-end px-4 pt-1 pointer-events-none opacity-20">
+           <span className="text-[8px] font-black text-white uppercase tracking-[0.3em]">{stepIndex + 1}/{totalSteps}</span>
         </div>
-        <div className="text-[4px] font-black text-[#003d71] uppercase tracking-tight text-center leading-tight mt-0.5">
-          © 2025 Michalis Paraforos<br />ΑΝΑΦΟΡΑ ΣΠΑΣΜΕΝΩΝ BINS
+        <div className="py-2 px-4 w-full text-center">
+          <p className="text-[6px] font-black text-white uppercase tracking-widest leading-none">
+            © 2025 Michalis Paraforos - ΑΝΑΦΟΡΑ ΣΠΑΣΜΕΝΩΝ BINS
+          </p>
         </div>
       </div>
     </div>

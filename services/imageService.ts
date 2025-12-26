@@ -5,7 +5,7 @@ export const compressImage = (file: File): Promise<string> => {
     
     img.onload = () => {
       const canvas = document.createElement('canvas');
-      // Μείωση σε 800px - Ιδανικό για mobile memory management
+      // 800px είναι υπεραρκετά για PDF αναφορά
       const MAX_DIM = 800;
       let width = img.width;
       let height = img.height;
@@ -28,17 +28,17 @@ export const compressImage = (file: File): Promise<string> => {
       
       if (!ctx) {
         URL.revokeObjectURL(objectUrl);
-        return reject('Could not get canvas context');
+        return reject('Canvas Error');
       }
       
       ctx.fillStyle = '#FFFFFF';
       ctx.fillRect(0, 0, width, height);
       ctx.drawImage(img, 0, 0, width, height);
       
-      // Ποιότητα 0.4 για ελαχιστοποίηση χρήσης RAM
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.4);
+      // Χαμηλότερη ποιότητα για εξοικονόμηση μνήμης (0.35)
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.35);
       
-      // Επιθετικό Cleanup
+      // Cleanup
       URL.revokeObjectURL(objectUrl);
       img.src = "";
       canvas.width = 0;
@@ -54,4 +54,14 @@ export const compressImage = (file: File): Promise<string> => {
 
     img.src = objectUrl;
   });
+};
+
+export const greekToLatin = (text: string): string => {
+  const map: Record<string, string> = {
+    'Α': 'A', 'Β': 'B', 'Γ': 'G', 'Δ': 'D', 'Ε': 'E', 'Ζ': 'Z', 'Η': 'I', 'Θ': 'TH',
+    'Ι': 'I', 'Κ': 'K', 'Λ': 'L', 'Μ': 'M', 'Ν': 'N', 'Ξ': 'X', 'Ο': 'O', 'Π': 'P',
+    'Ρ': 'R', 'Σ': 'S', 'Τ': 'T', 'Υ': 'Y', 'Φ': 'F', 'Χ': 'CH', 'Ψ': 'PS', 'Ω': 'O',
+    ' ': '_', '-': '_', '.': '_'
+  };
+  return text.toUpperCase().split('').map(char => map[char] || char).join('').replace(/[^A-Z0-9_]/g, '');
 };

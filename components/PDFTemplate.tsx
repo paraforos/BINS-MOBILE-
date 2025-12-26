@@ -28,7 +28,7 @@ const PDFTemplate: React.FC<PDFTemplateProps> = ({ data, page1Ref, page2Ref }) =
   const Footer = () => (
     <div className="mt-auto pt-4 border-t border-gray-200 flex justify-between items-center">
       <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest"></p>
-      <p className="text-[6px] text-gray-400 font-medium italic lowercase">σταλθηκε μεσω εφαρμογης agronomist</p>
+      <p className="text-[6px] text-gray-400 font-medium italic">Sent from Android</p>
     </div>
   );
 

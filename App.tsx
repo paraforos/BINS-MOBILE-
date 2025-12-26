@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera, Trash2, FileText, CheckCircle2, Loader2, RefreshCcw, Settings, Plus, ArrowLeft, Edit2, Check, X } from 'lucide-react';
+import { Camera, Trash2, FileText, CheckCircle2, Loader2, RefreshCcw, Settings, Plus, ArrowLeft, Edit2, Check, X, Download, Upload } from 'lucide-react';
 import { BinReportData, Step, AppView } from './types';
 import { compressImage } from './services/imageService';
 import StepLayout from './components/StepLayout';
@@ -46,26 +46,32 @@ interface ManagementViewProps {
   startEditing: (index: number, text: string) => void;
   cancelEditing: () => void;
   handleUpdateItem: (type: 'suppliers' | 'drivers' | 'products', index: number) => void;
+  onExport: () => void;
+  onImport: (file: File) => void;
 }
 
 const ManagementView: React.FC<ManagementViewProps> = ({
   onBack, suppliers, drivers, products, activeMgmtTab, setActiveMgmtTab,
   newItemText, setNewItemText, handleAddItem, handleDeleteItem,
-  editingIndex, editingText, setEditingText, startEditing, cancelEditing, handleUpdateItem
+  editingIndex, editingText, setEditingText, startEditing, cancelEditing, handleUpdateItem,
+  onExport, onImport
 }) => {
   const currentItems = activeMgmtTab === 'suppliers' ? suppliers : activeMgmtTab === 'drivers' ? drivers : products;
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <div className="flex flex-col min-h-[100dvh] bg-gray-50">
-      <header className="px-5 py-4 bg-white border-b flex items-center gap-3 sticky top-0 z-30 shadow-sm">
-        <button onClick={onBack} className="p-2 -ml-2 text-[#003d71] active:bg-gray-100 rounded-full transition-colors">
-          <ArrowLeft size={24} />
-        </button>
-        <h1 className="text-base font-black text-[#003d71] uppercase tracking-tight">Διαχείριση Λιστών</h1>
+    <div className="flex flex-col h-[100dvh] bg-gray-50 overflow-hidden">
+      <header className="px-5 py-4 bg-white border-b flex items-center justify-between sticky top-0 z-30 shadow-sm">
+        <div className="flex items-center gap-3">
+          <button onClick={onBack} className="p-2 -ml-2 text-[#003d71] active:bg-gray-100 rounded-full transition-colors">
+            <ArrowLeft size={24} />
+          </button>
+          <h1 className="text-base font-black text-[#003d71] uppercase tracking-tight">Διαχείριση Λιστών</h1>
+        </div>
       </header>
       
-      <main className="flex-1 p-4 space-y-4 pb-10">
-        <div className="flex bg-white p-1 rounded-2xl shadow-sm border border-gray-100">
+      <main className="flex-1 flex flex-col p-4 space-y-4 overflow-hidden">
+        <div className="flex bg-white p-1 rounded-2xl shadow-sm border border-gray-100 shrink-0">
           {(['suppliers', 'drivers', 'products'] as const).map((tab) => (
             <button
               key={tab}
@@ -79,12 +85,12 @@ const ManagementView: React.FC<ManagementViewProps> = ({
           ))}
         </div>
 
-        <div className="bg-white rounded-[2rem] p-5 shadow-sm border border-gray-100 space-y-4">
-          <div className="flex gap-2">
+        <div className="bg-white rounded-[2rem] p-5 shadow-sm border border-gray-100 flex flex-col overflow-hidden h-full">
+          <div className="flex gap-2 mb-4 shrink-0">
             <input 
               type="text" 
               className="flex-1 p-4 bg-gray-50 border border-gray-100 rounded-xl focus:outline-none focus:border-[#003d71] uppercase text-sm font-bold"
-              placeholder="Νέα εγγραφή..."
+              placeholder="Προσθήκη νέου..."
               value={newItemText}
               onChange={(e) => setNewItemText(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAddItem(activeMgmtTab)}
@@ -97,7 +103,7 @@ const ManagementView: React.FC<ManagementViewProps> = ({
             </button>
           </div>
 
-          <div className="space-y-1.5 max-h-[60dvh] overflow-y-auto pr-1 custom-scrollbar">
+          <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar space-y-1.5 touch-pan-y pb-4">
             {currentItems.map((item, idx) => (
               <div key={idx} className="flex items-center justify-between bg-gray-50 p-3.5 rounded-xl border border-transparent">
                 {editingIndex === idx ? (
@@ -126,6 +132,33 @@ const ManagementView: React.FC<ManagementViewProps> = ({
           </div>
         </div>
       </main>
+
+      {/* Backup/Restore Footer Section */}
+      <footer className="bg-white border-t border-gray-100 p-4 pb-8 space-y-3 z-30 shadow-[0_-4px_10px_rgba(0,0,0,0.03)]">
+        <div className="grid grid-cols-2 gap-3">
+          <button 
+            onClick={onExport}
+            className="flex flex-col items-center justify-center gap-1.5 py-4 bg-gray-50 text-[#003d71] rounded-2xl border-2 border-gray-100 active:bg-gray-100 active:scale-95 transition-all shadow-sm"
+          >
+            <Download size={22} />
+            <span className="text-[10px] font-black uppercase tracking-widest">Εξαγωγη Backup</span>
+          </button>
+          <button 
+            onClick={() => fileInputRef.current?.click()}
+            className="flex flex-col items-center justify-center gap-1.5 py-4 bg-gray-50 text-[#003d71] rounded-2xl border-2 border-gray-100 active:bg-gray-100 active:scale-95 transition-all shadow-sm"
+          >
+            <Upload size={22} />
+            <span className="text-[10px] font-black uppercase tracking-widest">Επαναφορα Backup</span>
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              className="hidden" 
+              accept=".json" 
+              onChange={(e) => e.target.files?.[0] && onImport(e.target.files[0])} 
+            />
+          </button>
+        </div>
+      </footer>
     </div>
   );
 };
@@ -148,7 +181,6 @@ const App: React.FC = () => {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingText, setEditingText] = useState('');
 
-  // Persistence logic
   useEffect(() => {
     const savedSuppliers = localStorage.getItem('aspis_suppliers');
     const savedDrivers = localStorage.getItem('aspis_drivers');
@@ -241,6 +273,47 @@ const App: React.FC = () => {
     saveLists(type, updated);
     setEditingIndex(null);
     setEditingText('');
+  };
+
+  const handleExport = () => {
+    const data = {
+      suppliers,
+      drivers,
+      products,
+      exportedAt: new Date().toISOString()
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `aspis_lists_backup_${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImport = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const json = JSON.parse(e.target?.result as string);
+        if (json.suppliers && json.drivers && json.products) {
+          if (confirm('ΠΡΟΣΟΧΗ: Θέλετε να αντικαταστήσετε τις τρέχουσες λίστες με τις λίστες του αρχείου;')) {
+            setSuppliers(json.suppliers);
+            setDrivers(json.drivers);
+            setProducts(json.products);
+            saveLists('suppliers', json.suppliers);
+            saveLists('drivers', json.drivers);
+            saveLists('products', json.products);
+            alert('Επιτυχής εισαγωγή και επαναφορά των λιστών!');
+          }
+        } else {
+          alert('Μη έγκυρο αρχείο αντιγράφου.');
+        }
+      } catch (err) {
+        alert('Σφάλμα κατά την ανάγνωση του αρχείου.');
+      }
+    };
+    reader.readAsText(file);
   };
 
   const handleNext = () => {
@@ -336,96 +409,132 @@ const App: React.FC = () => {
         startEditing={startEditing}
         cancelEditing={cancelEditing}
         handleUpdateItem={handleUpdateItem}
+        onExport={handleExport}
+        onImport={handleImport}
       />
     );
   }
+
+  const MainHeader = () => (
+    <header className="px-5 py-3 bg-white border-b flex items-center justify-between sticky top-0 z-40 shadow-sm">
+      <div className="flex flex-col">
+        <span className="text-[10px] font-black text-[#003d71] uppercase tracking-[0.2em] leading-none mb-1">ASPIS</span>
+        <h1 className="text-xs font-black text-gray-900 uppercase tracking-tight">Bins Damage Reporter</h1>
+      </div>
+      <button 
+        onClick={() => setView(AppView.Management)}
+        className="p-2 text-[#003d71] active:bg-blue-50 rounded-full transition-colors"
+        title="Διαχείριση Λιστών"
+      >
+        <Settings size={20} />
+      </button>
+    </header>
+  );
 
   const renderStepContent = () => {
     switch (currentStep) {
       case Step.Supplier:
         return (
-          <StepLayout title="ΟΝΟΜΑ ΠΡΟΜΗΘΕΥΤΗ" stepIndex={0} totalSteps={7} onNext={handleNext} isNextDisabled={!formData.supplierName}>
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Λίστα Προμηθευτών</span>
-              <button onClick={() => setView(AppView.Management)} className="flex items-center gap-1 text-[9px] font-black text-[#003d71] bg-blue-50 px-3 py-1.5 rounded-full uppercase tracking-widest active:bg-blue-100">
-                <Settings size={10} /> Διαχειριση
-              </button>
-            </div>
-            <div className="grid grid-cols-1 gap-2 max-h-[45dvh] overflow-y-auto pr-1 custom-scrollbar">
-              {suppliers.map((s, i) => (
-                <button key={i} onClick={() => updateField('supplierName', s)} className={`w-full p-4 rounded-xl text-left font-bold uppercase transition-all flex items-center justify-between border-2 ${formData.supplierName === s ? 'bg-[#003d71] text-white border-[#003d71]' : 'bg-gray-50 text-gray-700 border-transparent hover:border-gray-200'}`}>
-                  <span className="truncate text-sm">{s}</span>
-                  {formData.supplierName === s && <CheckCircle2 size={18} />}
-                </button>
-              ))}
-            </div>
-          </StepLayout>
+          <>
+            <MainHeader />
+            <StepLayout title="ΟΝΟΜΑ ΠΡΟΜΗΘΕΥΤΗ" stepIndex={0} totalSteps={7} onNext={handleNext} isNextDisabled={!formData.supplierName}>
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Λίστα Προμηθευτών</span>
+              </div>
+              <div className="grid grid-cols-1 gap-2 max-h-[50dvh] overflow-y-auto pr-2 custom-scrollbar">
+                {suppliers.map((s, i) => (
+                  <button key={i} onClick={() => updateField('supplierName', s)} className={`w-full p-4 rounded-xl text-left font-bold uppercase transition-all flex items-center justify-between border-2 ${formData.supplierName === s ? 'bg-[#003d71] text-white border-[#003d71]' : 'bg-gray-50 text-gray-700 border-transparent active:border-gray-200'}`}>
+                    <span className="truncate text-sm">{s}</span>
+                    {formData.supplierName === s && <CheckCircle2 size={18} />}
+                  </button>
+                ))}
+              </div>
+            </StepLayout>
+          </>
         );
       case Step.Driver:
         return (
-          <StepLayout title="ΟΔΗΓΟΣ" stepIndex={1} totalSteps={7} onNext={handleNext} onBack={handleBack} isNextDisabled={!formData.driverName}>
-            <div className="grid grid-cols-1 gap-2 max-h-[45dvh] overflow-y-auto pr-1 custom-scrollbar">
-              {drivers.map((d, i) => (
-                <button key={i} onClick={() => updateField('driverName', d)} className={`w-full p-4 rounded-xl text-left font-bold uppercase transition-all flex items-center justify-between border-2 ${formData.driverName === d ? 'bg-[#003d71] text-white border-[#003d71]' : 'bg-gray-50 text-gray-700 border-transparent hover:border-gray-200'}`}>
-                  <span className="truncate text-sm">{d}</span>
-                  {formData.driverName === d && <CheckCircle2 size={18} />}
-                </button>
-              ))}
-            </div>
-          </StepLayout>
+          <>
+            <MainHeader />
+            <StepLayout title="ΟΔΗΓΟΣ" stepIndex={1} totalSteps={7} onNext={handleNext} onBack={handleBack} isNextDisabled={!formData.driverName}>
+              <div className="grid grid-cols-1 gap-2 max-h-[50dvh] overflow-y-auto pr-2 custom-scrollbar">
+                {drivers.map((d, i) => (
+                  <button key={i} onClick={() => updateField('driverName', d)} className={`w-full p-4 rounded-xl text-left font-bold uppercase transition-all flex items-center justify-between border-2 ${formData.driverName === d ? 'bg-[#003d71] text-white border-[#003d71]' : 'bg-gray-50 text-gray-700 border-transparent active:border-gray-200'}`}>
+                    <span className="truncate text-sm">{d}</span>
+                    {formData.driverName === d && <CheckCircle2 size={18} />}
+                  </button>
+                ))}
+              </div>
+            </StepLayout>
+          </>
         );
       case Step.Product:
         return (
-          <StepLayout title="ΠΡΟΪΟΝ" stepIndex={2} totalSteps={7} onNext={handleNext} onBack={handleBack} isNextDisabled={!formData.product}>
-            <div className="grid grid-cols-1 gap-2 max-h-[45dvh] overflow-y-auto pr-1 custom-scrollbar">
-              {products.map((p, i) => (
-                <button key={i} onClick={() => updateField('product', p)} className={`w-full p-4 rounded-xl text-left font-bold uppercase transition-all flex items-center justify-between border-2 ${formData.product === p ? 'bg-[#003d71] text-white border-[#003d71]' : 'bg-gray-50 text-gray-700 border-transparent hover:border-gray-200'}`}>
-                  <span className="truncate text-sm">{p}</span>
-                  {formData.product === p && <CheckCircle2 size={18} />}
-                </button>
-              ))}
-            </div>
-          </StepLayout>
+          <>
+            <MainHeader />
+            <StepLayout title="ΠΡΟΪΟΝ" stepIndex={2} totalSteps={7} onNext={handleNext} onBack={handleBack} isNextDisabled={!formData.product}>
+              <div className="grid grid-cols-1 gap-2 max-h-[50dvh] overflow-y-auto pr-2 custom-scrollbar">
+                {products.map((p, i) => (
+                  <button key={i} onClick={() => updateField('product', p)} className={`w-full p-4 rounded-xl text-left font-bold uppercase transition-all flex items-center justify-between border-2 ${formData.product === p ? 'bg-[#003d71] text-white border-[#003d71]' : 'bg-gray-50 text-gray-700 border-transparent active:border-gray-200'}`}>
+                    <span className="truncate text-sm">{p}</span>
+                    {formData.product === p && <CheckCircle2 size={18} />}
+                  </button>
+                ))}
+              </div>
+            </StepLayout>
+          </>
         );
       case Step.TotalBins:
         return (
-          <StepLayout title="ΣΥΝΟΛΙΚΑ BINS ΠΑΡΤΙΔΑΣ" stepIndex={3} totalSteps={7} onNext={handleNext} onBack={handleBack} isNextDisabled={!formData.totalBins.trim()}>
-            <input type="number" inputMode="numeric" autoFocus className="w-full text-5xl p-6 border-2 border-gray-100 rounded-2xl focus:border-[#003d71] focus:outline-none text-center font-black bg-gray-50/50" placeholder="0" value={formData.totalBins} onChange={(e) => updateField('totalBins', e.target.value)} />
-          </StepLayout>
+          <>
+            <MainHeader />
+            <StepLayout title="ΣΥΝΟΛΙΚΑ BINS ΠΑΡΤΙΔΑΣ" stepIndex={3} totalSteps={7} onNext={handleNext} onBack={handleBack} isNextDisabled={!formData.totalBins.trim()}>
+              <input type="number" inputMode="numeric" autoFocus className="w-full text-5xl p-6 border-2 border-gray-100 rounded-2xl focus:border-[#003d71] focus:outline-none text-center font-black bg-gray-50/50" placeholder="0" value={formData.totalBins} onChange={(e) => updateField('totalBins', e.target.value)} />
+            </StepLayout>
+          </>
         );
       case Step.BrokenBins:
         return (
-          <StepLayout title="ΣΠΑΣΜΕΝΑ BINS" stepIndex={4} totalSteps={7} onNext={handleNext} onBack={handleBack} isNextDisabled={!formData.brokenBins.trim()}>
-            <input type="number" inputMode="numeric" autoFocus className="w-full text-5xl p-6 border-2 border-gray-100 rounded-2xl focus:border-red-600 focus:outline-none text-center font-black text-red-600 bg-gray-50/50" placeholder="0" value={formData.brokenBins} onChange={(e) => updateField('brokenBins', e.target.value)} />
-          </StepLayout>
+          <>
+            <MainHeader />
+            <StepLayout title="ΣΠΑΣΜΕΝΑ BINS" stepIndex={4} totalSteps={7} onNext={handleNext} onBack={handleBack} isNextDisabled={!formData.brokenBins.trim()}>
+              <input type="number" inputMode="numeric" autoFocus className="w-full text-5xl p-6 border-2 border-gray-100 rounded-2xl focus:border-red-600 focus:outline-none text-center font-black text-red-600 bg-gray-50/50" placeholder="0" value={formData.brokenBins} onChange={(e) => updateField('brokenBins', e.target.value)} />
+            </StepLayout>
+          </>
         );
       case Step.Photos:
         return (
-          <StepLayout title="ΦΩΤΟΓΡΑΦΙΕΣ ΠΑΡΤΙΔΑΣ" description="Έως 9 λήψεις" stepIndex={5} totalSteps={7} onNext={handleNext} onBack={handleBack}>
-            <div className="grid grid-cols-3 gap-2 mb-4">
-              {formData.photos.map((photo, idx) => (
-                <div key={idx} className="relative aspect-square rounded-xl overflow-hidden shadow-sm border border-gray-100">
-                  <img src={photo} className="w-full h-full object-cover" alt="Evidence" />
-                  <button onClick={() => updateField('photos', formData.photos.filter((_, i) => i !== idx))} className="absolute top-1 right-1 bg-red-600 text-white p-1.5 rounded-full shadow-lg"><Trash2 size={12} /></button>
-                </div>
-              ))}
-              {formData.photos.length < 9 && (
-                <label className="flex flex-col items-center justify-center aspect-square border-2 border-dashed border-[#003d71] rounded-xl bg-blue-50/30 text-[#003d71] cursor-pointer active:scale-95 transition-transform">
-                  <Camera size={26} />
-                  <span className="text-[8px] font-black mt-1 uppercase tracking-tighter">ΚΑΜΕΡΑ</span>
-                  <input type="file" className="hidden" accept="image/*" multiple onChange={handlePhotoUpload} capture="environment" />
-                </label>
-              )}
-            </div>
-            {isUploading && <div className="flex items-center gap-2 text-[10px] font-black text-blue-600 uppercase animate-pulse mb-2"><Loader2 size={12} className="animate-spin" /> Συμπίεση...</div>}
-            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">{formData.photos.length}/9 ΦΩΤΟΓΡΑΦΙΕΣ</div>
-          </StepLayout>
+          <>
+            <MainHeader />
+            <StepLayout title="ΦΩΤΟΓΡΑΦΙΕΣ ΠΑΡΤΙΔΑΣ" description="Έως 9 λήψεις" stepIndex={5} totalSteps={7} onNext={handleNext} onBack={handleBack}>
+              <div className="grid grid-cols-3 gap-2 mb-4">
+                {formData.photos.map((photo, idx) => (
+                  <div key={idx} className="relative aspect-square rounded-xl overflow-hidden shadow-sm border border-gray-100">
+                    <img src={photo} className="w-full h-full object-cover" alt="Evidence" />
+                    <button onClick={() => updateField('photos', formData.photos.filter((_, i) => i !== idx))} className="absolute top-1 right-1 bg-red-600 text-white p-1.5 rounded-full shadow-lg"><Trash2 size={12} /></button>
+                  </div>
+                ))}
+                {formData.photos.length < 9 && (
+                  <label className="flex flex-col items-center justify-center aspect-square border-2 border-dashed border-[#003d71] rounded-xl bg-blue-50/30 text-[#003d71] cursor-pointer active:scale-95 transition-transform">
+                    <Camera size={26} />
+                    <span className="text-[8px] font-black mt-1 uppercase tracking-tighter">ΚΑΜΕΡΑ</span>
+                    <input type="file" className="hidden" accept="image/*" multiple onChange={handlePhotoUpload} capture="environment" />
+                  </label>
+                )}
+              </div>
+              {isUploading && <div className="flex items-center gap-2 text-[10px] font-black text-blue-600 uppercase animate-pulse mb-2"><Loader2 size={12} className="animate-spin" /> Συμπίεση...</div>}
+              <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">{formData.photos.length}/9 ΦΩΤΟΓΡΑΦΙΕΣ</div>
+            </StepLayout>
+          </>
         );
       case Step.Summary:
         return (
           <div className="flex flex-col min-h-[100dvh] bg-white">
             <header className="px-5 py-4 border-b flex items-center justify-between sticky top-0 bg-white/95 backdrop-blur-md z-30">
-                <Logo />
+                <div className="flex flex-col">
+                  <span className="text-[8px] font-black text-[#003d71] uppercase tracking-[0.2em] leading-none mb-1">ASPIS</span>
+                  <h1 className="text-[10px] font-black text-gray-900 uppercase">Summary Report</h1>
+                </div>
                 <button onClick={handleBack} className="text-[9px] font-black text-[#003d71] border-2 border-[#003d71] px-4 py-2 rounded-full uppercase tracking-widest active:bg-gray-50">Διόρθωση</button>
             </header>
             <main className="flex-1 px-5 pt-6 space-y-6 pb-48">
@@ -465,8 +574,8 @@ const App: React.FC = () => {
                 <RefreshCcw size={10} /> Νέα Αναφορά
               </button>
               <div className="text-center leading-tight mt-2">
-                <p className="text-[5px] font-black text-gray-300 uppercase tracking-tight">© 2025 Michalis Paraforos</p>
-                <p className="text-[5px] font-black text-gray-300 uppercase tracking-tight">ΑΝΑΦΟΡΑ ΣΠΑΣΜΕΝΩΝ BINS</p>
+                <p className="text-[4px] font-black text-gray-300 uppercase tracking-tight">© 2025 Michalis Paraforos</p>
+                <p className="text-[4px] font-black text-gray-300 uppercase tracking-tight">ΑΝΑΦΟΡΑ ΣΠΑΣΜΕΝΩΝ BINS</p>
               </div>
             </footer>
             <PDFTemplate data={formData} reportRef={pdfRef} />

@@ -26,9 +26,9 @@ const StepLayout: React.FC<StepLayoutProps> = ({
   const progress = ((stepIndex + 1) / totalSteps) * 100;
 
   return (
-    <div className="flex flex-col min-h-[100dvh] bg-white">
+    <div className="flex flex-col min-h-fit bg-white">
       {/* progress bar */}
-      <div className="w-full h-1 bg-gray-100 sticky top-0 z-20">
+      <div className="w-full h-1 bg-gray-100 sticky top-[53px] z-20">
         <div 
           className="h-full bg-[#003d71] transition-all duration-300" 
           style={{ width: `${progress}%` }} 
@@ -79,7 +79,7 @@ const StepLayout: React.FC<StepLayoutProps> = ({
         <div className="w-full flex justify-end items-center">
           <span className="text-[8px] font-black text-[#003d71] uppercase tracking-[0.3em]">{stepIndex + 1}/{totalSteps}</span>
         </div>
-        <div className="text-[5px] font-black text-[#003d71] uppercase tracking-tight text-center leading-tight mt-0.5">
+        <div className="text-[4px] font-black text-[#003d71] uppercase tracking-tight text-center leading-tight mt-0.5">
           © 2025 Michalis Paraforos<br />ΑΝΑΦΟΡΑ ΣΠΑΣΜΕΝΩΝ BINS
         </div>
       </div>

@@ -41,16 +41,21 @@
   input, select, textarea {
     font-size: 16px !important;
   }
+  
+  /* Βελτιωμένη και πιο φαρδιά μπάρα κύλισης για κινητά */
   .custom-scrollbar::-webkit-scrollbar {
-    width: 3px;
+    width: 10px;
   }
   .custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #e5e7eb;
+    background: #f1f5f9;
     border-radius: 10px;
   }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #003d71;
+    border-radius: 10px;
+    border: 3px solid #f1f5f9; /* Δημιουργεί εσωτερικό περιθώριο */
+  }
+  
   @media all and (display-mode: standalone) {
     body {
       padding-top: var(--safe-area-inset-top);

@@ -1,4 +1,3 @@
-
 export const compressImage = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const objectUrl = URL.createObjectURL(file);
@@ -6,8 +5,8 @@ export const compressImage = (file: File): Promise<string> => {
     
     img.onload = () => {
       const canvas = document.createElement('canvas');
-      // Μείωση σε 1000px για εξοικονόμηση μνήμης σε κινητά
-      const MAX_DIM = 1000;
+      // Μείωση σε 800px - Ιδανικό για mobile memory management
+      const MAX_DIM = 800;
       let width = img.width;
       let height = img.height;
 
@@ -25,7 +24,7 @@ export const compressImage = (file: File): Promise<string> => {
 
       canvas.width = width;
       canvas.height = height;
-      const ctx = canvas.getContext('2d', { alpha: false }); // Απενεργοποίηση alpha για λιγότερη μνήμη
+      const ctx = canvas.getContext('2d', { alpha: false });
       
       if (!ctx) {
         URL.revokeObjectURL(objectUrl);
@@ -36,13 +35,13 @@ export const compressImage = (file: File): Promise<string> => {
       ctx.fillRect(0, 0, width, height);
       ctx.drawImage(img, 0, 0, width, height);
       
-      // Ποιότητα 0.5 για βέλτιστη ισορροπία μεγέθους/μνήμης
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
+      // Ποιότητα 0.4 για ελαχιστοποίηση χρήσης RAM
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.4);
       
-      // Cleanup
+      // Επιθετικό Cleanup
       URL.revokeObjectURL(objectUrl);
-      img.src = ""; // Clear image memory
-      canvas.width = 0; // Clear canvas memory
+      img.src = "";
+      canvas.width = 0;
       canvas.height = 0;
       
       resolve(dataUrl);

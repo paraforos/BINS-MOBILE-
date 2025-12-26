@@ -52,9 +52,6 @@ const App: React.FC = () => {
   const [predefinedComments, setPredefinedComments] = useState<string[]>([]);
   const [newItemText, setNewItemText] = useState('');
   const [activeMgmtTab, setActiveMgmtTab] = useState<'suppliers' | 'drivers' | 'products' | 'comments'>('suppliers');
-  
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
-  const [editingText, setEditingText] = useState('');
 
   useEffect(() => {
     const get = (k: string) => localStorage.getItem(k);
@@ -103,30 +100,44 @@ const App: React.FC = () => {
     if (!pdfRef.current || isGenerating) return;
     setIsGenerating(true);
     try {
-      const canvas = await window.html2canvas(pdfRef.current, { scale: 1.5, useCORS: true, backgroundColor: '#e5e7eb' });
+      // Μείωση scale στο 1.0 για αποφυγή crash μνήμης
+      const canvas = await window.html2canvas(pdfRef.current, { 
+        scale: 1, 
+        useCORS: true, 
+        backgroundColor: '#e5e7eb',
+        logging: false,
+        removeContainer: true
+      });
+      
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF('p', 'mm', 'a4');
       
-      const imgData = canvas.toDataURL('image/jpeg', 0.8);
+      // Use JPEG compression
+      const imgData = canvas.toDataURL('image/jpeg', 0.7);
       const pageWidth = 210;
       const pageHeight = 297;
-      const canvasWidth = canvas.width;
-      const canvasHeight = canvas.height;
-      const imgHeight = (canvasHeight * pageWidth) / canvasWidth;
 
-      // Πρώτη Σελίδα
-      pdf.addImage(imgData, 'JPEG', 0, 0, pageWidth, pageHeight, undefined, 'FAST', 0);
+      // Σελίδα 1
+      pdf.addImage(imgData, 'JPEG', 0, 0, pageWidth, pageHeight, undefined, 'FAST');
       
-      // Δεύτερη Σελίδα (αν το ύψος του καμβά υπερβαίνει τη μία σελίδα)
+      // Σελίδα 2 αν υπάρχουν πολλές φωτό
       if (formData.photos.length > 4) {
         pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, -pageHeight, pageWidth, pageHeight, undefined, 'FAST', 0);
+        pdf.addImage(imgData, 'JPEG', 0, -pageHeight, pageWidth, pageHeight, undefined, 'FAST');
       }
 
-      pdf.save(`ASPIS_REPORT_${new Date().toISOString().split('T')[0]}.pdf`);
+      pdf.save(`ASPIS_${new Date().getTime()}.pdf`);
+      
+      // Clear draft to free memory
       localStorage.removeItem('aspis_draft_report');
-    } catch (e) { alert("Σφάλμα μνήμης κατά την έκδοση PDF!"); }
-    finally { setIsGenerating(false); }
+      alert("Η αναφορά εκδόθηκε επιτυχώς!");
+    } catch (e) { 
+      console.error(e);
+      alert("Σφάλμα μνήμης! Δοκιμάστε να αφαιρέσετε κάποιες φωτογραφίες ή να κάνετε επανεκκίνηση."); 
+    }
+    finally { 
+      setIsGenerating(false); 
+    }
   };
 
   if (showSplash) return (
@@ -158,7 +169,7 @@ const App: React.FC = () => {
     <div className="flex flex-col h-screen bg-white">
       <header className="p-5 border-b-4 border-black flex items-center gap-4">
         <button onClick={() => setView(AppView.Reporter)} className="p-2 border-2 border-black rounded-xl"><ArrowLeft size={24} /></button>
-        <h1 className="text-xl font-black uppercase">ΡΥΘΜΙΣΕΙΣ ΛΙΣΤΩΝ</h1>
+        <h1 className="text-xl font-black uppercase">ΡΥΘΜΙΣΕΙΣ</h1>
       </header>
       <main className="flex-1 p-5 overflow-hidden flex flex-col gap-4">
         <div className="flex gap-1 bg-gray-100 p-1 rounded-xl overflow-x-auto no-scrollbar">
@@ -169,7 +180,7 @@ const App: React.FC = () => {
           ))}
         </div>
         <div className="flex gap-2">
-          <input value={newItemText} onChange={e => setNewItemText(e.target.value)} className="flex-1 p-4 border-4 border-gray-100 rounded-2xl focus:border-black outline-none uppercase font-black" placeholder="ΠΡΟΣΘΗΚΗ ΝΕΟΥ..." />
+          <input value={newItemText} onChange={e => setNewItemText(e.target.value)} className="flex-1 p-4 border-4 border-gray-100 rounded-2xl focus:border-black outline-none uppercase font-black" placeholder="ΠΡΟΣΘΗΚΗ..." />
           <button onClick={() => handleAddItem(activeMgmtTab)} className="bg-black text-white p-4 rounded-2xl"><Plus size={32} /></button>
         </div>
         <div className="flex-1 overflow-y-auto space-y-2 custom-scrollbar pb-10">
@@ -251,14 +262,17 @@ const App: React.FC = () => {
               ))}
               {formData.photos.length < 9 && (
                 <label className="aspect-square border-4 border-dashed border-black rounded-2xl flex flex-col items-center justify-center bg-gray-50 active:bg-gray-200 cursor-pointer">
-                  <Camera size={40} />
+                  {isUploading ? <Loader2 className="animate-spin text-black" size={40} /> : <Camera size={40} />}
                   <input type="file" className="hidden" accept="image/*" capture="environment" multiple onChange={async e => {
                     const files = Array.from(e.target.files || []).slice(0, 9 - formData.photos.length) as File[];
+                    if (files.length === 0) return;
                     setIsUploading(true);
                     try {
                       const compressed = await Promise.all(files.map(f => compressImage(f)));
                       setFormData(p => ({ ...p, photos: [...p.photos, ...compressed] }));
-                    } catch(e) {} finally { setIsUploading(false); }
+                    } catch(err) {
+                      alert("Πρόβλημα με την επεξεργασία της εικόνας.");
+                    } finally { setIsUploading(false); }
                   }} />
                 </label>
               )}
@@ -280,7 +294,7 @@ const App: React.FC = () => {
               </div>
             </div>
           )}
-          {isUploading && <div className="mt-4 p-4 bg-yellow-400 text-black font-black text-center rounded-2xl animate-pulse">ΕΠΕΞΕΡΓΑΣΙΑ ΦΩΤΟΓΡΑΦΙΩΝ...</div>}
+          {isUploading && <div className="mt-4 p-4 bg-yellow-400 text-black font-black text-center rounded-2xl animate-pulse">ΕΠΕΞΕΡΓΑΣΙΑ...</div>}
         </StepLayout>
       )}
       <PDFTemplate data={formData} reportRef={pdfRef} />

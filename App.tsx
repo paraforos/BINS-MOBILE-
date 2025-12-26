@@ -53,7 +53,9 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (formData !== INITIAL_DATA) localStorage.setItem('aspis_draft_report', JSON.stringify(formData));
+    if (formData !== INITIAL_DATA) {
+      localStorage.setItem('aspis_draft_report', JSON.stringify(formData));
+    }
   }, [formData]);
 
   const generatePDF = async () => {
@@ -64,31 +66,32 @@ const App: React.FC = () => {
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF('p', 'mm', 'a4');
       
-      // Capture Page 1
+      // Page 1
       if (page1Ref.current) {
         const canvas1 = await window.html2canvas(page1Ref.current, { scale: 1.5, logging: false });
         const img1 = canvas1.toDataURL('image/jpeg', 0.8);
         pdf.addImage(img1, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
-        canvas1.width = 0; canvas1.height = 0; // Clear memory
+        canvas1.width = 0; canvas1.height = 0;
       }
 
-      // Capture Page 2 (if exists)
+      // Page 2
       if (formData.photos.length > 4 && page2Ref.current) {
         pdf.addPage();
         const canvas2 = await window.html2canvas(page2Ref.current, { scale: 1.5, logging: false });
         const img2 = canvas2.toDataURL('image/jpeg', 0.8);
         pdf.addImage(img2, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
-        canvas2.width = 0; canvas2.height = 0; // Clear memory
+        canvas2.width = 0; canvas2.height = 0;
       }
 
-      const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '_');
+      const now = new Date();
+      const dateStr = `${now.getFullYear()}_${String(now.getMonth() + 1).padStart(2, '0')}_${String(now.getDate()).padStart(2, '0')}`;
       const supplierLatin = greekToLatin(formData.supplierName || 'REPORT');
       pdf.save(`${supplierLatin}_${dateStr}.pdf`);
       
       localStorage.removeItem('aspis_draft_report');
       alert("Επιτυχής εξαγωγή PDF!");
     } catch (e) {
-      alert("Σφάλμα μνήμης! Κάντε επανεκκίνηση ή αφαιρέστε 1-2 φωτογραφίες.");
+      alert("Σφάλμα μνήμης! Αφαιρέστε μερικές φωτογραφίες.");
     } finally {
       setIsGenerating(false);
     }
@@ -107,10 +110,10 @@ const App: React.FC = () => {
   const SummaryItem = ({ label, value, step }: { label: string, value: string, step: Step }) => (
     <div className="flex justify-between items-center bg-white p-4 rounded-2xl border-2 border-gray-100 mb-2">
       <div>
-        <p className="text-[10px] font-black text-gray-400 uppercase">{label}</p>
+        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{label}</p>
         <p className="text-lg font-black uppercase text-black">{value || '-'}</p>
       </div>
-      <button onClick={() => setCurrentStep(step)} className="p-2 text-blue-600"><Edit2 size={18} /></button>
+      <button onClick={() => setCurrentStep(step)} className="p-3 text-blue-600 bg-blue-50 rounded-xl active:bg-blue-100"><Edit2 size={18} /></button>
     </div>
   );
 
@@ -118,7 +121,7 @@ const App: React.FC = () => {
     <div className="flex flex-col h-screen bg-white">
       <header className="p-5 border-b-4 border-black flex items-center gap-4">
         <button onClick={() => setView(AppView.Reporter)} className="p-2 border-2 border-black rounded-xl"><ArrowLeft size={24} /></button>
-        <h1 className="text-xl font-black uppercase">ΡΥΘΜΙΣΕΙΣ</h1>
+        <h1 className="text-xl font-black uppercase">ΡΥΘΜΙΣΕΙΣ ΛΙΣΤΩΝ</h1>
       </header>
       <main className="flex-1 p-5 overflow-hidden flex flex-col gap-4">
         <div className="flex gap-1 bg-gray-100 p-1 rounded-xl overflow-x-auto no-scrollbar">
@@ -129,7 +132,7 @@ const App: React.FC = () => {
           ))}
         </div>
         <div className="flex gap-2">
-          <input value={newItemText} onChange={e => setNewItemText(e.target.value)} className="flex-1 p-4 border-4 border-gray-100 rounded-2xl focus:border-black outline-none uppercase font-black" placeholder="ΝΕΟ ΣΤΟΙΧΕΙΟ..." />
+          <input value={newItemText} onChange={e => setNewItemText(e.target.value)} className="flex-1 p-4 border-4 border-gray-100 rounded-2xl focus:border-black outline-none uppercase font-black" placeholder="ΠΡΟΣΘΗΚΗ..." />
           <button onClick={() => {
              const type = activeMgmtTab;
              if (!newItemText.trim()) return;
@@ -145,7 +148,8 @@ const App: React.FC = () => {
               <span>{item}</span>
               <button onClick={() => {
                 if(!confirm('ΔΙΑΓΡΑΦΗ;')) return;
-                const next = (activeMgmtTab === 'suppliers' ? suppliers : activeMgmtTab === 'drivers' ? drivers : activeMgmtTab === 'products' ? products : predefinedComments).filter((_, idx) => idx !== i);
+                const list = (activeMgmtTab === 'suppliers' ? suppliers : activeMgmtTab === 'drivers' ? drivers : activeMgmtTab === 'products' ? products : predefinedComments);
+                const next = list.filter((_, idx) => idx !== i);
                 if (activeMgmtTab === 'suppliers') setSuppliers(next); else if (activeMgmtTab === 'drivers') setDrivers(next); else if (activeMgmtTab === 'products') setProducts(next); else setPredefinedComments(next);
                 localStorage.setItem(activeMgmtTab === 'comments' ? 'aspis_comments' : `aspis_${activeMgmtTab}`, JSON.stringify(next));
               }} className="text-red-600 p-2"><Trash2 size={20} /></button>
@@ -159,36 +163,52 @@ const App: React.FC = () => {
   return (
     <div className={`max-w-md mx-auto min-h-screen bg-white ${isGenerating ? 'generating-pdf' : ''}`}>
       <header className="px-5 py-4 bg-white border-b-4 border-black flex items-center justify-between sticky top-0 z-50">
-        <Logo className="h-8 w-auto" />
-        <button onClick={() => setView(AppView.Management)} className="p-2 border-2 border-black rounded-xl"><Settings size={24} /></button>
+        <div className="flex items-center gap-2">
+           <Logo className="h-8 w-auto" />
+           <span className="text-[10px] font-black uppercase tracking-tighter">Reporter</span>
+        </div>
+        <button onClick={() => setView(AppView.Management)} className="p-2 border-2 border-black rounded-xl active:bg-gray-100"><Settings size={24} /></button>
       </header>
 
       {currentStep === Step.Summary ? (
-        <div className="p-5 pb-48">
-          <h2 className="text-2xl font-black mb-6 uppercase border-l-8 border-black pl-4">ΣΥΝΟΨΗ ΑΝΑΦΟΡΑΣ</h2>
+        <div className="p-5 pb-48 animate-in fade-in duration-300">
+          <h2 className="text-2xl font-black mb-6 uppercase border-l-8 border-black pl-4 tracking-tighter">ΣΥΝΟΨΗ ΑΝΑΦΟΡΑΣ</h2>
+          
           <SummaryItem label="ΠΡΟΜΗΘΕΥΤΗΣ" value={formData.supplierName} step={Step.Supplier} />
           <SummaryItem label="ΟΔΗΓΟΣ" value={formData.driverName} step={Step.Driver} />
           <SummaryItem label="ΠΡΟΪΟΝ" value={formData.product} step={Step.Product} />
+          
           <div className="grid grid-cols-2 gap-2 mb-2">
-             <div className="bg-gray-100 p-4 rounded-2xl border-2 border-gray-100 flex justify-between items-center">
-                <div><p className="text-[10px] font-black text-gray-400">ΣΥΝΟΛΟ</p><p className="text-xl font-black">{formData.totalBins}</p></div>
-                <button onClick={() => setCurrentStep(Step.TotalBins)} className="text-blue-600"><Edit2 size={16} /></button>
+             <div className="bg-white p-4 rounded-2xl border-2 border-gray-100 flex justify-between items-center">
+                <div><p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">ΣΥΝΟΛΟ</p><p className="text-2xl font-black">{formData.totalBins}</p></div>
+                <button onClick={() => setCurrentStep(Step.TotalBins)} className="p-2 text-blue-600"><Edit2 size={16} /></button>
              </div>
-             <div className="bg-red-50 p-4 rounded-2xl border-2 border-red-100 flex justify-between items-center">
-                <div><p className="text-[10px] font-black text-red-400">ΣΠΑΣΜΕΝΑ</p><p className="text-xl font-black text-red-600">{formData.brokenBins}</p></div>
-                <button onClick={() => setCurrentStep(Step.BrokenBins)} className="text-blue-600"><Edit2 size={16} /></button>
+             <div className="bg-white p-4 rounded-2xl border-2 border-gray-100 flex justify-between items-center">
+                <div><p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">ΣΠΑΣΜΕΝΑ</p><p className="text-2xl font-black text-red-600">{formData.brokenBins}</p></div>
+                <button onClick={() => setCurrentStep(Step.BrokenBins)} className="p-2 text-blue-600"><Edit2 size={16} /></button>
              </div>
           </div>
+
+          <div className="bg-white p-4 rounded-2xl border-2 border-gray-100 mb-4 flex justify-between items-start">
+             <div className="flex-1">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">ΣΧΟΛΙΑ</p>
+                <p className="text-sm font-bold uppercase italic mt-1 leading-snug">{formData.comments || 'ΧΩΡΙΣ ΣΧΟΛΙΑ'}</p>
+             </div>
+             <button onClick={() => setCurrentStep(Step.Comments)} className="p-2 text-blue-600"><Edit2 size={16} /></button>
+          </div>
+
           <div className="grid grid-cols-3 gap-2 mt-4">
-            {formData.photos.map((p, i) => <img key={i} src={p} className="aspect-square object-cover rounded-xl border-2 border-gray-100" />)}
-            <button onClick={() => setCurrentStep(Step.Photos)} className="aspect-square border-4 border-dashed border-gray-200 rounded-xl flex items-center justify-center text-gray-300"><Edit2 /></button>
+            {formData.photos.map((p, i) => (
+              <img key={i} src={p} className="aspect-square object-cover rounded-xl border-2 border-gray-100" alt="Summary" />
+            ))}
+            <button onClick={() => setCurrentStep(Step.Photos)} className="aspect-square border-4 border-dashed border-gray-200 rounded-xl flex items-center justify-center text-gray-300 active:bg-gray-50"><Edit2 /></button>
           </div>
 
           <footer className="fixed bottom-0 left-0 right-0 p-6 bg-white border-t-4 border-gray-100 flex flex-col gap-3 z-50 shadow-2xl">
-            <button onClick={generatePDF} disabled={isGenerating} className="w-full py-6 bg-black text-white rounded-[2rem] font-black text-2xl flex items-center justify-center gap-4 active:scale-95 disabled:opacity-50">
+            <button onClick={generatePDF} disabled={isGenerating} className="w-full py-6 bg-black text-white rounded-[2rem] font-black text-2xl flex items-center justify-center gap-4 active:scale-95 disabled:opacity-50 shadow-xl">
               {isGenerating ? <Loader2 className="animate-spin" size={32} /> : <FileText size={32} />} ΕΚΔΟΣΗ PDF
             </button>
-            <button onClick={() => confirm('ΔΙΑΓΡΑΦΗ ΚΑΙ ΝΕΑ ΑΝΑΦΟΡΑ;') && window.location.reload()} className="text-gray-400 font-black text-xs uppercase text-center py-2 flex items-center justify-center gap-2"><RefreshCcw size={14} /> ΝΕΑ ΑΝΑΦΟΡΑ</button>
+            <button onClick={() => confirm('ΔΙΑΓΡΑΦΗ ΚΑΙ ΝΕΑ ΑΝΑΦΟΡΑ;') && window.location.reload()} className="text-gray-400 font-black text-[10px] uppercase text-center py-2 flex items-center justify-center gap-2 tracking-widest"><RefreshCcw size={14} /> ΝΕΑ ΑΝΑΦΟΡΑ</button>
           </footer>
         </div>
       ) : (
@@ -206,20 +226,20 @@ const App: React.FC = () => {
           }
         >
           {currentStep <= 2 ? (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {(currentStep === 0 ? suppliers : currentStep === 1 ? drivers : products).map((item, i) => (
-                <button key={i} onClick={() => setFormData(p => ({ ...p, [currentStep === 0 ? 'supplierName' : currentStep === 1 ? 'driverName' : 'product']: item }))} className={`w-full p-6 rounded-[2rem] text-left font-black uppercase text-xl border-4 transition-all ${ (currentStep === 0 ? formData.supplierName : currentStep === 1 ? formData.driverName : formData.product) === item ? 'bg-yellow-400 border-yellow-400 shadow-lg scale-[1.02]' : 'bg-gray-50 border-gray-100' }`}>
+                <button key={i} onClick={() => setFormData(p => ({ ...p, [currentStep === 0 ? 'supplierName' : currentStep === 1 ? 'driverName' : 'product']: item }))} className={`w-full p-6 rounded-[1.5rem] text-left font-black uppercase text-lg border-4 transition-all ${ (currentStep === 0 ? formData.supplierName : currentStep === 1 ? formData.driverName : formData.product) === item ? 'bg-black text-white border-black shadow-lg scale-[1.02]' : 'bg-gray-50 border-gray-100 text-black' }`}>
                   {item}
                 </button>
               ))}
             </div>
           ) : currentStep === 3 || currentStep === 4 ? (
-            <input type="number" inputMode="numeric" autoFocus className={`w-full text-8xl p-10 border-4 border-gray-200 rounded-[3rem] text-center font-black outline-none ${currentStep === 4 ? 'bg-red-50 text-red-600' : 'bg-gray-50'}`} value={currentStep === 3 ? formData.totalBins : formData.brokenBins} onChange={e => setFormData(p => ({ ...p, [currentStep === 3 ? 'totalBins' : 'brokenBins']: e.target.value }))} />
+            <input type="number" inputMode="numeric" autoFocus className={`w-full text-8xl p-10 border-4 border-gray-200 rounded-[3rem] text-center font-black outline-none ${currentStep === 4 ? 'bg-white text-red-600 border-red-200' : 'bg-white'}`} value={currentStep === 3 ? formData.totalBins : formData.brokenBins} onChange={e => setFormData(p => ({ ...p, [currentStep === 3 ? 'totalBins' : 'brokenBins']: e.target.value }))} />
           ) : currentStep === 5 ? (
             <div className="grid grid-cols-3 gap-3">
               {formData.photos.map((p, i) => (
                 <div key={i} className="relative aspect-square rounded-2xl overflow-hidden border-2 border-gray-100">
-                  <img src={p} className="w-full h-full object-cover" />
+                  <img src={p} className="w-full h-full object-cover" alt="Captured" />
                   <button onClick={() => setFormData(prev => ({ ...prev, photos: prev.photos.filter((_, idx) => idx !== i) }))} className="absolute top-1 right-1 bg-red-600 text-white p-2 rounded-xl"><Trash2 size={16} /></button>
                 </div>
               ))}
@@ -233,17 +253,21 @@ const App: React.FC = () => {
                     try {
                       const compressed = await Promise.all(files.map(f => compressImage(f)));
                       setFormData(p => ({ ...p, photos: [...p.photos, ...compressed] }));
-                    } catch(err) { alert("Error"); } finally { setIsUploading(false); }
+                    } catch(err) { alert("Error processing image"); } finally { setIsUploading(false); }
                   }} />
                 </label>
               )}
             </div>
           ) : (
             <div className="space-y-6">
-              <textarea rows={3} className="w-full p-6 border-4 border-gray-100 rounded-[2rem] outline-none font-black text-xl uppercase bg-gray-50" placeholder="ΓΡΑΨΤΕ ΕΔΩ..." value={formData.comments} onChange={e => setFormData(p => ({ ...p, comments: e.target.value.toUpperCase() }))} />
+              <textarea rows={3} className="w-full p-6 border-4 border-gray-100 rounded-[2rem] outline-none font-black text-xl uppercase bg-white focus:border-black" placeholder="ΠΡΟΣΘΕΣΤΕ ΣΧΟΛΙΑ..." value={formData.comments} onChange={e => setFormData(p => ({ ...p, comments: e.target.value.toUpperCase() }))} />
               <div className="grid grid-cols-1 gap-2">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] px-2 mb-1">ΠΡΟΤΕΙΝΟΜΕΝΑ ΣΧΟΛΙΑ:</p>
                 {predefinedComments.map((c, i) => (
-                  <button key={i} onClick={() => setFormData(p => ({ ...p, comments: p.comments ? `${p.comments}, ${c}` : c }))} className="p-4 bg-white border-2 border-gray-100 rounded-xl text-left font-black uppercase text-sm">+ {c}</button>
+                  <button key={i} onClick={() => setFormData(p => ({ ...p, comments: p.comments ? `${p.comments}, ${c}` : c }))} className="p-4 bg-white border-2 border-gray-100 rounded-xl text-left font-black uppercase text-sm active:border-black active:bg-gray-50 flex items-center justify-between">
+                    <span>{c}</span>
+                    <Plus size={16} />
+                  </button>
                 ))}
               </div>
             </div>

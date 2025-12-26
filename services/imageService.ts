@@ -5,8 +5,7 @@ export const compressImage = (file: File): Promise<string> => {
     
     img.onload = () => {
       const canvas = document.createElement('canvas');
-      // 800px είναι υπεραρκετά για PDF αναφορά
-      const MAX_DIM = 800;
+      const MAX_DIM = 800; // Ιδανικό για mobile RAM
       let width = img.width;
       let height = img.height;
 
@@ -35,10 +34,8 @@ export const compressImage = (file: File): Promise<string> => {
       ctx.fillRect(0, 0, width, height);
       ctx.drawImage(img, 0, 0, width, height);
       
-      // Χαμηλότερη ποιότητα για εξοικονόμηση μνήμης (0.35)
       const dataUrl = canvas.toDataURL('image/jpeg', 0.35);
       
-      // Cleanup
       URL.revokeObjectURL(objectUrl);
       img.src = "";
       canvas.width = 0;
@@ -61,6 +58,7 @@ export const greekToLatin = (text: string): string => {
     'Α': 'A', 'Β': 'B', 'Γ': 'G', 'Δ': 'D', 'Ε': 'E', 'Ζ': 'Z', 'Η': 'I', 'Θ': 'TH',
     'Ι': 'I', 'Κ': 'K', 'Λ': 'L', 'Μ': 'M', 'Ν': 'N', 'Ξ': 'X', 'Ο': 'O', 'Π': 'P',
     'Ρ': 'R', 'Σ': 'S', 'Τ': 'T', 'Υ': 'Y', 'Φ': 'F', 'Χ': 'CH', 'Ψ': 'PS', 'Ω': 'O',
+    'Ά': 'A', 'Έ': 'E', 'Ή': 'I', 'Ί': 'I', 'Ό': 'O', 'Ύ': 'Y', 'Ώ': 'O',
     ' ': '_', '-': '_', '.': '_'
   };
   return text.toUpperCase().split('').map(char => map[char] || char).join('').replace(/[^A-Z0-9_]/g, '');

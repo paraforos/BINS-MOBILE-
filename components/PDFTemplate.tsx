@@ -15,69 +15,70 @@ const PDFTemplate: React.FC<PDFTemplateProps> = ({ data, page1Ref, page2Ref }) =
 
   const Header = () => (
     <div className="mb-8">
-      <div className="flex justify-between items-end mb-3">
-        <Logo className="h-14 w-auto" />
+      <div className="flex justify-between items-end mb-4">
+        <Logo className="h-16 w-auto" />
         <div className="text-right">
-          <h1 className="text-[18px] font-black uppercase tracking-tighter leading-none mb-1">ΑΝΑΦΟΡΑ ΖΗΜΙΑΣ BINS</h1>
-          <p className="text-[9px] font-bold text-gray-500 tracking-widest">ASPIS QUALITY CONTROL SYSTEM</p>
+          <h1 className="text-[20px] font-black uppercase tracking-tighter leading-none mb-1">ΑΝΑΦΟΡΑ ΣΠΑΣΜΕΝΩΝ BINS</h1>
+          <p className="text-[10px] font-bold text-gray-400 tracking-widest">ASPIS S.A.</p>
         </div>
       </div>
-      <div className="h-[4px] w-full bg-black" />
+      <div className="h-[2px] w-full bg-black" />
     </div>
   );
 
   const Footer = () => (
-    <div className="mt-auto pt-4 border-t-2 border-gray-100 flex justify-between items-center">
-      <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">ASPIS S.A. OFFICE COPY</p>
-      <p className="text-[6px] text-gray-300 font-bold italic">στάλθηκε από agronomist@aspis.gr</p>
+    <div className="mt-auto pt-4 border-t border-gray-200 flex justify-between items-center">
+      <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">ASPIS BINS DAMAGE REPORTER</p>
+      <p className="text-[6px] text-gray-400 font-medium italic lowercase">στάλθηκε από agronomist@aspis.gr</p>
+    </div>
+  );
+
+  const InfoBox = ({ label, value }: { label: string, value: string }) => (
+    <div className="border-b border-gray-300 pb-2">
+      <p className="text-[9px] font-black text-gray-400 mb-1 uppercase tracking-wider">{label}</p>
+      <p className="text-[13px] font-bold uppercase text-black">{value || '-'}</p>
+    </div>
+  );
+
+  const StatBox = ({ label, value, isRed = false }: { label: string, value: string, isRed?: boolean }) => (
+    <div className="border border-gray-300 p-5 rounded-2xl flex flex-col justify-center">
+      <p className="text-[9px] font-black text-gray-400 mb-1 uppercase tracking-wider">{label}</p>
+      <p className={`text-[28px] font-black leading-none ${isRed ? 'text-black' : 'text-black'}`}>{value || '0'}</p>
     </div>
   );
 
   return (
-    <div className="fixed -left-[4000px] top-0 pointer-events-none bg-gray-200 p-10 flex flex-col gap-20">
+    <div className="fixed -left-[5000px] top-0 pointer-events-none flex flex-col gap-10">
       
-      {/* ΣΕΛΙΔΑ 1 */}
-      <div ref={page1Ref} className="bg-white w-[210mm] h-[297mm] flex flex-col p-[20mm] box-border shadow-2xl overflow-hidden">
+      {/* PAGE 1 */}
+      <div ref={page1Ref} className="bg-white w-[210mm] h-[297mm] flex flex-col p-[20mm] box-border shadow-none overflow-hidden text-black font-sans">
         <Header />
         
-        <div className="grid grid-cols-2 gap-x-10 gap-y-6 mb-10">
-          {[
-            { label: 'ΠΡΟΜΗΘΕΥΤΗΣ', val: data.supplierName },
-            { label: 'ΗΜΕΡΟΜΗΝΙΑ', val: today },
-            { label: 'ΟΔΗΓΟΣ', val: data.driverName },
-            { label: 'ΠΡΟΪΟΝ', val: data.product }
-          ].map((item, i) => (
-            <div key={i} className="border-b-2 border-gray-100 pb-2">
-              <p className="text-[10px] font-black text-gray-400 mb-1 uppercase tracking-wider">{item.label}</p>
-              <p className="text-[14px] font-black uppercase">{item.val || '-'}</p>
-            </div>
-          ))}
+        <div className="grid grid-cols-2 gap-x-12 gap-y-6 mb-10">
+          <InfoBox label="ΠΡΟΜΗΘΕΥΤΗΣ" value={data.supplierName} />
+          <InfoBox label="ΗΜΕΡΟΜΗΝΙΑ" value={today} />
+          <InfoBox label="ΟΔΗΓΟΣ" value={data.driverName} />
+          <InfoBox label="ΠΡΟΪΟΝ" value={data.product} />
         </div>
 
         <div className="grid grid-cols-2 gap-6 mb-10">
-          <div className="bg-gray-50 p-6 rounded-3xl border-2 border-gray-100">
-            <p className="text-[10px] font-black text-gray-400 mb-1 uppercase tracking-wider">ΣΥΝΟΛΙΚΑ BINS</p>
-            <p className="text-[32px] font-black leading-none">{data.totalBins || '0'}</p>
-          </div>
-          <div className="bg-red-50 p-6 rounded-3xl border-2 border-red-100">
-            <p className="text-[10px] font-black text-red-400 mb-1 uppercase tracking-wider">ΣΠΑΣΜΕΝΑ</p>
-            <p className="text-[32px] font-black text-red-600 leading-none">{data.brokenBins || '0'}</p>
-          </div>
+          <StatBox label="ΣΥΝΟΛΙΚΑ BINS" value={data.totalBins} />
+          <StatBox label="ΣΠΑΣΜΕΝΑ" value={data.brokenBins} isRed />
         </div>
 
-        <div className="mb-10 p-6 rounded-3xl bg-gray-50 border-2 border-gray-100 min-h-[100px]">
-          <p className="text-[10px] font-black text-gray-400 mb-2 uppercase tracking-wider">ΠΑΡΑΤΗΡΗΣΕΙΣ / ΣΧΟΛΙΑ</p>
-          <p className="text-[12px] font-bold leading-relaxed italic">
+        <div className="mb-10 p-6 border border-gray-300 rounded-2xl min-h-[80px]">
+          <p className="text-[9px] font-black text-gray-400 mb-2 uppercase tracking-wider">ΣΧΟΛΙΑ / ΠΑΡΑΤΗΡΗΣΕΙΣ</p>
+          <p className="text-[11px] font-medium leading-relaxed italic text-black">
             {data.comments || 'Δεν υπάρχουν επιπλέον σχόλια.'}
           </p>
         </div>
 
         <div className="flex-1">
-          <h2 className="text-[11px] font-black uppercase mb-4 tracking-widest border-l-4 border-black pl-4">ΦΩΤΟΓΡΑΦΙΚΟ ΥΛΙΚΟ (1-4)</h2>
-          <div className="grid grid-cols-2 gap-6">
+          <h2 className="text-[10px] font-black uppercase mb-4 tracking-widest border-l-4 border-black pl-3">ΦΩΤΟΓΡΑΦΙΕΣ</h2>
+          <div className="grid grid-cols-2 gap-4">
             {firstPagePhotos.map((photo, i) => (
-              <div key={i} className="aspect-[4/3] rounded-2xl overflow-hidden border-2 border-gray-100 bg-gray-50 flex items-center justify-center">
-                <img src={photo} className="w-full h-full object-contain" alt="Photo" />
+              <div key={i} className="aspect-[4/3] rounded-xl overflow-hidden border border-gray-200 bg-white flex items-center justify-center">
+                <img src={photo} className="w-full h-full object-contain" alt="Damage" />
               </div>
             ))}
           </div>
@@ -86,16 +87,16 @@ const PDFTemplate: React.FC<PDFTemplateProps> = ({ data, page1Ref, page2Ref }) =
         <Footer />
       </div>
 
-      {/* ΣΕΛΙΔΑ 2 */}
+      {/* PAGE 2 */}
       {secondPagePhotos.length > 0 && (
-        <div ref={page2Ref} className="bg-white w-[210mm] h-[297mm] flex flex-col p-[20mm] box-border shadow-2xl overflow-hidden">
+        <div ref={page2Ref} className="bg-white w-[210mm] h-[297mm] flex flex-col p-[20mm] box-border shadow-none overflow-hidden text-black font-sans">
           <Header />
           <div className="flex-1">
-            <h2 className="text-[11px] font-black uppercase mb-6 tracking-widest border-l-4 border-black pl-4">ΣΥΜΠΛΗΡΩΜΑΤΙΚΕΣ ΦΩΤΟΓΡΑΦΙΕΣ (5-{4 + secondPagePhotos.length})</h2>
-            <div className="grid grid-cols-2 gap-6">
+            <h2 className="text-[10px] font-black uppercase mb-6 tracking-widest border-l-4 border-black pl-3">ΣΥΝΕΧΕΙΑ ΦΩΤΟΓΡΑΦΙΩΝ</h2>
+            <div className="grid grid-cols-2 gap-4">
               {secondPagePhotos.map((photo, i) => (
-                <div key={i} className="aspect-[4/3] rounded-2xl overflow-hidden border-2 border-gray-100 bg-gray-50 flex items-center justify-center">
-                  <img src={photo} className="w-full h-full object-contain" alt="Photo" />
+                <div key={i} className="aspect-[4/3] rounded-xl overflow-hidden border border-gray-200 bg-white flex items-center justify-center">
+                  <img src={photo} className="w-full h-full object-contain" alt="Damage Continued" />
                 </div>
               ))}
             </div>

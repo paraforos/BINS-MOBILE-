@@ -62,15 +62,12 @@ const PDFTemplate: React.FC<PDFTemplateProps> = ({ data, reportRef }) => {
           </h2>
           <div className="grid grid-cols-2 gap-4">
             {data.photos.map((photo, index) => (
-              <div key={index} className="aspect-video w-full relative overflow-hidden bg-gray-50 border border-gray-200 rounded-lg">
+              <div key={index} className="aspect-video w-full relative overflow-hidden bg-gray-50 border border-gray-200 rounded-lg shadow-sm">
                 <img 
                   src={photo} 
                   alt={`Evidence ${index + 1}`} 
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute bottom-1 right-1 bg-black/50 text-white text-[8px] px-2 py-0.5 rounded font-mono">
-                  IMG_{index + 1}
-                </div>
               </div>
             ))}
             {data.photos.length === 0 && (
@@ -85,9 +82,6 @@ const PDFTemplate: React.FC<PDFTemplateProps> = ({ data, reportRef }) => {
         <div className="mt-12 pt-8 border-t border-gray-100 flex flex-col items-center gap-1">
           <div className="text-[10px] text-gray-400 text-center font-medium">
             <p>Η ΑΝΑΦΟΡΑ ΣΤΑΛΘΗΚΕ ΑΠΟ agronomist@aspis.gr</p>
-          </div>
-          <div className="text-[6px] text-gray-300 font-black uppercase tracking-tight text-center leading-tight">
-            © 2025 Michalis Paraforos<br />ΑΝΑΦΟΡΑ ΣΠΑΣΜΕΝΩΝ BINS
           </div>
         </div>
       </div>

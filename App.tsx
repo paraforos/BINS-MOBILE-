@@ -535,7 +535,7 @@ const App: React.FC = () => {
                   <span className="text-[8px] font-black text-[#003d71] uppercase tracking-[0.2em] leading-none mb-1">ASPIS</span>
                   <h1 className="text-[10px] font-black text-gray-900 uppercase">Summary Report</h1>
                 </div>
-                <button onClick={handleBack} className="text-[9px] font-black text-[#003d71] border-2 border-[#003d71] px-4 py-2 rounded-full uppercase tracking-widest active:bg-gray-50">Διόρθωση</button>
+                <button onClick={handleBack} className="text-[11px] font-black text-[#003d71] border-2 border-[#003d71] px-5 py-2.5 rounded-full uppercase tracking-widest active:bg-gray-50 shadow-sm transition-all">Διόρθωση</button>
             </header>
             <main className="flex-1 px-5 pt-6 space-y-6 pb-48">
               <div className="bg-[#003d71] rounded-[2rem] p-6 text-white shadow-xl relative overflow-hidden">

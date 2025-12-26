@@ -67,9 +67,9 @@ const StepLayout: React.FC<StepLayoutProps> = ({
           {onBack && (
             <button
               onClick={onBack}
-              className="w-full py-3 text-gray-400 font-bold text-xs uppercase flex items-center justify-center gap-1 active:bg-gray-50 rounded-xl transition-colors tracking-widest"
+              className="w-full py-4 text-gray-400 font-black text-sm uppercase flex items-center justify-center gap-2 active:bg-gray-50 rounded-xl transition-colors tracking-widest border border-transparent active:border-gray-100"
             >
-              <ChevronLeft size={16} /> ΠΙΣΩ
+              <ChevronLeft size={20} /> ΠΙΣΩ
             </button>
           )}
         </div>

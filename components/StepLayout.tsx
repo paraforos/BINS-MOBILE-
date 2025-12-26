@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
 
@@ -81,7 +80,6 @@ const StepLayout: React.FC<StepLayoutProps> = ({
       {/* Extreme Low Battery / Sunlight Footer */}
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-black py-3 px-4 flex justify-between items-center shadow-[0_-10px_20px_rgba(0,0,0,0.1)]">
         <p className="text-[8px] font-black text-white uppercase tracking-widest">
-          ASPIS DAMAGE REPORTER
         </p>
         <span className="text-[10px] font-black text-yellow-400 uppercase">{stepIndex + 1} / {totalSteps}</span>
       </div>

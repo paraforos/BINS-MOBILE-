@@ -354,7 +354,7 @@ const App: React.FC = () => {
 
   const generatePDF = async () => {
     if (!pdfRef.current || !window.html2canvas || !window.jspdf) {
-      alert("Οι βιβλιοθήκες PDF δεν είναι έτοιμες. Παρακαλώ περιμένετε ή ελέγξτε τη σύνδεση.");
+      alert("Οι βιβλιοθήκες PDF δεν είναι έτοιμες. Παρακαλώ περιμένετε.");
       return;
     }
     setIsGenerating(true);
@@ -365,13 +365,35 @@ const App: React.FC = () => {
         logging: false, 
         backgroundColor: '#ffffff' 
       });
-      const imgData = canvas.toDataURL('image/jpeg', 0.85);
+      
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4', compress: true });
-      pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
+      
+      const imgWidth = 210; // A4 mm
+      const pageHeight = 297; // A4 mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const imgData = canvas.toDataURL('image/jpeg', 0.85);
+      
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      // First page
+      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      // Additional pages if needed
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
       const dateStr = new Date().toLocaleDateString('el-GR').replace(/\//g, '-');
-      const cleanSupplier = formData.supplierName.replace(/[^a-z0-9α-ω]/gi, '_').substring(0,10);
+      const cleanSupplier = (formData.supplierName || 'REPORT').replace(/[^a-z0-9α-ω]/gi, '_').substring(0,10);
       pdf.save(`ASPIS_${cleanSupplier}_${dateStr}.pdf`);
+      
+      // Clear draft only after successful generation
       localStorage.removeItem('aspis_draft_report');
     } catch (err) {
       console.error("PDF Error:", err);

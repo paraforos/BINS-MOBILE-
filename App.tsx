@@ -333,7 +333,7 @@ const App: React.FC = () => {
       predefinedComments,
       exportedAt: new Date().toISOString()
     };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' }); // No formatting to save space
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -342,31 +342,45 @@ const App: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
-  const handleImport = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const json = JSON.parse(e.target?.result as string);
-        if (json.suppliers && json.drivers && json.products) {
-          if (confirm('ΠΡΟΣΟΧΗ: Θέλετε να αντικαταστήσετε τις τρέχουσες λίστες με τις λίστες του αρχείου;')) {
+  const handleImport = async (file: File) => {
+    try {
+      // Memory efficient reading
+      let content = await file.text();
+      const json = JSON.parse(content);
+      content = ""; // Clear string immediately to free RAM
+
+      if (json.suppliers && json.drivers && json.products) {
+        if (confirm('ΠΡΟΣΟΧΗ: Θέλετε να αντικαταστήσετε τις τρέχουσες λίστες;')) {
+          // Staggered updates to let the JS engine breathe
+          setTimeout(() => {
             setSuppliers(json.suppliers);
-            setDrivers(json.drivers);
-            setProducts(json.products);
-            setPredefinedComments(json.predefinedComments || DEFAULT_LISTS.predefinedComments);
             saveLists('suppliers', json.suppliers);
+          }, 0);
+
+          setTimeout(() => {
+            setDrivers(json.drivers);
             saveLists('drivers', json.drivers);
+          }, 50);
+
+          setTimeout(() => {
+            setProducts(json.products);
             saveLists('products', json.products);
-            saveLists('comments', json.predefinedComments || DEFAULT_LISTS.predefinedComments);
-            alert('Επιτυχής εισαγωγή και επαναφορά των λιστών!');
-          }
-        } else {
-          alert('Μη έγκυρο αρχείο αντιγράφου.');
+          }, 100);
+
+          setTimeout(() => {
+            const comments = json.predefinedComments || DEFAULT_LISTS.predefinedComments;
+            setPredefinedComments(comments);
+            saveLists('comments', comments);
+            alert('Επιτυχής εισαγωγή!');
+          }, 150);
         }
-      } catch (err) {
-        alert('Σφάλμα κατά την ανάγνωση του αρχείου.');
+      } else {
+        alert('Μη έγκυρο αρχείο αντιγράφου.');
       }
-    };
-    reader.readAsText(file);
+    } catch (err) {
+      console.error(err);
+      alert('Σφάλμα κατά την ανάγνωση. Βεβαιωθείτε ότι το αρχείο είναι έγκυρο JSON.');
+    }
   };
 
   const handleNext = () => {
@@ -396,8 +410,6 @@ const App: React.FC = () => {
     
     setIsUploading(true);
     try {
-      // Επεξεργασία διαδοχική (Sequential) αντί για παράλληλη (Parallel)
-      // Αυτό αποτρέπει την υπερφόρτωση της RAM σε κινητά
       const processedPhotos: string[] = [];
       for (const file of filesToProcess) {
         const compressed = await compressImage(file);
@@ -410,7 +422,7 @@ const App: React.FC = () => {
       }));
     } catch (err) {
       console.error("Compression error:", err);
-      alert("Σφάλμα στην επεξεργασία εικόνων. Δοκιμάστε να ανεβάσετε λιγότερες φωτογραφίες ταυτόχρονα.");
+      alert("Σφάλμα μνήμης. Δοκιμάστε να ανεβάσετε λιγότερες φωτογραφίες.");
     } finally {
       setIsUploading(false);
       e.target.value = '';
@@ -419,25 +431,26 @@ const App: React.FC = () => {
 
   const generatePDF = async () => {
     if (!pdfRef.current || !window.html2canvas || !window.jspdf) {
-      alert("Οι βιβλιοθήκες PDF δεν είναι έτοιμες. Παρακαλώ περιμένετε.");
+      alert("Οι βιβλιοθήκες PDF δεν είναι έτοιμες.");
       return;
     }
     setIsGenerating(true);
     try {
       const canvas = await window.html2canvas(pdfRef.current, { 
-        scale: 2, 
+        scale: 1.5, // Lower scale to save memory
         useCORS: true, 
         logging: false, 
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        removeContainer: true // Important for cleanup
       });
       
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
       
-      const imgWidth = 210; // A4 mm width
-      const pageHeight = 297; // A4 mm height
+      const imgWidth = 210;
+      const pageHeight = 297;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      const imgData = canvas.toDataURL('image/jpeg', 0.8); // 0.8 quality for PDF
+      const imgData = canvas.toDataURL('image/jpeg', 0.6); // Lower quality for memory
       
       let heightLeft = imgHeight;
       let position = 0;
@@ -456,10 +469,14 @@ const App: React.FC = () => {
       const cleanSupplier = (formData.supplierName || 'REPORT').replace(/[^a-z0-9α-ω]/gi, '_').substring(0,10);
       pdf.save(`ASPIS_${cleanSupplier}_${dateStr}.pdf`);
       
+      // EXPLICIT CLEANUP of canvas
+      canvas.width = 0;
+      canvas.height = 0;
+      
       localStorage.removeItem('aspis_draft_report');
     } catch (err) {
       console.error("PDF Error:", err);
-      alert("Αποτυχία έκδοσης PDF.");
+      alert("Αποτυχία έκδοσης PDF (πιθανή χαμηλή μνήμη).");
     } finally {
       setIsGenerating(false);
     }

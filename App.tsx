@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera, Trash2, FileText, CheckCircle2, Loader2, RefreshCcw, Settings, Plus, ArrowLeft, Edit2, Check, X, Download, Upload } from 'lucide-react';
+import { Camera, Trash2, FileText, CheckCircle2, Loader2, RefreshCcw, Settings, Plus, ArrowLeft, Edit2, Check, X, Download, Upload, MessageSquare, Globe, WifiOff } from 'lucide-react';
 import { BinReportData, Step, AppView } from './types';
 import { compressImage } from './services/imageService';
 import StepLayout from './components/StepLayout';
@@ -20,13 +20,41 @@ const INITIAL_DATA: BinReportData = {
   product: '',
   totalBins: '',
   brokenBins: '',
-  photos: []
+  photos: [],
+  comments: ''
 };
 
 const DEFAULT_LISTS = {
   suppliers: ['ΣΥΝΕΤΑΙΡΙΣΜΟΣ Α', 'ΣΥΝΕΤΑΙΡΙΣΜΟΣ Β', 'ΙΔΙΩΤΗΣ'],
   drivers: ['ΓΙΑΝΝΗΣ ΠΑΠΑΔΟΠΟΥΛΟΣ', 'ΚΩΣΤΑΣ ΝΙΚΟΛΑΟΥ'],
-  products: ['ΣΥΜΠΥΡΗΝΑ', 'ΡΟΔΑΚΙΝΑ', 'ΝΕΚΤΑΡΙΝΙΑ']
+  products: ['ΣΥΜΠΥΡΗΝΑ', 'ΡΟΔΑΚΙΝΑ', 'ΝΕΚΤΑΡΙΝΙΑ'],
+  predefinedComments: ['ΣΠΑΣΜΕΝΟ ΠΑΤΟ', 'ΣΠΑΣΜΕΝΟ ΠΛΑΪΝΟ', 'ΚΑΜΕΝΟ BINS', 'ΦΘΟΡΑ ΑΠΟ ΧΡΗΣΗ']
+};
+
+const OnlineStatus: React.FC = () => {
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  return (
+    <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-gray-50 border border-gray-100 shadow-sm transition-all">
+      <div className={`w-2 h-2 rounded-full animate-pulse ${isOnline ? 'bg-green-500' : 'bg-red-500'}`} />
+      <span className={`text-[8px] font-black uppercase tracking-tighter ${isOnline ? 'text-green-600' : 'text-red-600'}`}>
+        {isOnline ? 'Online' : 'Offline'}
+      </span>
+    </div>
+  );
 };
 
 interface ManagementViewProps {
@@ -34,29 +62,35 @@ interface ManagementViewProps {
   suppliers: string[];
   drivers: string[];
   products: string[];
-  activeMgmtTab: 'suppliers' | 'drivers' | 'products';
-  setActiveMgmtTab: (tab: 'suppliers' | 'drivers' | 'products') => void;
+  predefinedComments: string[];
+  activeMgmtTab: 'suppliers' | 'drivers' | 'products' | 'comments';
+  setActiveMgmtTab: (tab: 'suppliers' | 'drivers' | 'products' | 'comments') => void;
   newItemText: string;
   setNewItemText: (text: string) => void;
-  handleAddItem: (type: 'suppliers' | 'drivers' | 'products') => void;
-  handleDeleteItem: (type: 'suppliers' | 'drivers' | 'products', index: number) => void;
+  handleAddItem: (type: 'suppliers' | 'drivers' | 'products' | 'comments') => void;
+  handleDeleteItem: (type: 'suppliers' | 'drivers' | 'products' | 'comments', index: number) => void;
   editingIndex: number | null;
   editingText: string;
   setEditingText: (text: string) => void;
   startEditing: (index: number, text: string) => void;
   cancelEditing: () => void;
-  handleUpdateItem: (type: 'suppliers' | 'drivers' | 'products', index: number) => void;
+  handleUpdateItem: (type: 'suppliers' | 'drivers' | 'products' | 'comments', index: number) => void;
   onExport: () => void;
   onImport: (file: File) => void;
 }
 
 const ManagementView: React.FC<ManagementViewProps> = ({
-  onBack, suppliers, drivers, products, activeMgmtTab, setActiveMgmtTab,
+  onBack, suppliers, drivers, products, predefinedComments, activeMgmtTab, setActiveMgmtTab,
   newItemText, setNewItemText, handleAddItem, handleDeleteItem,
   editingIndex, editingText, setEditingText, startEditing, cancelEditing, handleUpdateItem,
   onExport, onImport
 }) => {
-  const currentItems = activeMgmtTab === 'suppliers' ? suppliers : activeMgmtTab === 'drivers' ? drivers : products;
+  const currentItems = 
+    activeMgmtTab === 'suppliers' ? suppliers : 
+    activeMgmtTab === 'drivers' ? drivers : 
+    activeMgmtTab === 'products' ? products : 
+    predefinedComments;
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   return (
@@ -66,21 +100,24 @@ const ManagementView: React.FC<ManagementViewProps> = ({
           <button onClick={onBack} className="p-2 -ml-2 text-[#003d71] active:bg-gray-100 rounded-full transition-colors">
             <ArrowLeft size={24} />
           </button>
-          <h1 className="text-base font-black text-[#003d71] uppercase tracking-tight">Διαχείριση Λιστών</h1>
+          <div className="flex flex-col">
+            <h1 className="text-base font-black text-[#003d71] uppercase tracking-tight">Διαχείριση Λιστών</h1>
+          </div>
         </div>
+        <OnlineStatus />
       </header>
       
       <main className="flex-1 flex flex-col p-4 space-y-4 overflow-hidden">
-        <div className="flex bg-white p-1 rounded-2xl shadow-sm border border-gray-100 shrink-0">
-          {(['suppliers', 'drivers', 'products'] as const).map((tab) => (
+        <div className="flex bg-white p-1 rounded-2xl shadow-sm border border-gray-100 shrink-0 overflow-x-auto no-scrollbar">
+          {(['suppliers', 'drivers', 'products', 'comments'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => { setActiveMgmtTab(tab); setNewItemText(''); cancelEditing(); }}
-              className={`flex-1 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
+              className={`flex-1 py-3 px-3 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
                 activeMgmtTab === tab ? 'bg-[#003d71] text-white shadow-md' : 'text-gray-400'
               }`}
             >
-              {tab === 'suppliers' ? 'Προμηθευτες' : tab === 'drivers' ? 'Οδηγοι' : 'Προϊοντα'}
+              {tab === 'suppliers' ? 'Προμηθευτες' : tab === 'drivers' ? 'Οδηγοι' : tab === 'products' ? 'Προϊοντα' : 'Σχολια'}
             </button>
           ))}
         </div>
@@ -175,8 +212,9 @@ const App: React.FC = () => {
   const [suppliers, setSuppliers] = useState<string[]>([]);
   const [drivers, setDrivers] = useState<string[]>([]);
   const [products, setProducts] = useState<string[]>([]);
+  const [predefinedComments, setPredefinedComments] = useState<string[]>([]);
   const [newItemText, setNewItemText] = useState('');
-  const [activeMgmtTab, setActiveMgmtTab] = useState<'suppliers' | 'drivers' | 'products'>('suppliers');
+  const [activeMgmtTab, setActiveMgmtTab] = useState<'suppliers' | 'drivers' | 'products' | 'comments'>('suppliers');
   
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingText, setEditingText] = useState('');
@@ -185,9 +223,11 @@ const App: React.FC = () => {
     const savedSuppliers = localStorage.getItem('aspis_suppliers');
     const savedDrivers = localStorage.getItem('aspis_drivers');
     const savedProducts = localStorage.getItem('aspis_products');
+    const savedComments = localStorage.getItem('aspis_comments');
     setSuppliers(savedSuppliers ? JSON.parse(savedSuppliers) : DEFAULT_LISTS.suppliers);
     setDrivers(savedDrivers ? JSON.parse(savedDrivers) : DEFAULT_LISTS.drivers);
     setProducts(savedProducts ? JSON.parse(savedProducts) : DEFAULT_LISTS.products);
+    setPredefinedComments(savedComments ? JSON.parse(savedComments) : DEFAULT_LISTS.predefinedComments);
 
     const draft = localStorage.getItem('aspis_draft_report');
     if (draft) {
@@ -209,11 +249,12 @@ const App: React.FC = () => {
     }
   }, [formData]);
 
-  const saveLists = (type: 'suppliers' | 'drivers' | 'products', newList: string[]) => {
-    localStorage.setItem(`aspis_${type}`, JSON.stringify(newList));
+  const saveLists = (type: 'suppliers' | 'drivers' | 'products' | 'comments', newList: string[]) => {
+    const key = type === 'comments' ? 'aspis_comments' : `aspis_${type}`;
+    localStorage.setItem(key, JSON.stringify(newList));
   };
 
-  const handleAddItem = (type: 'suppliers' | 'drivers' | 'products') => {
+  const handleAddItem = (type: 'suppliers' | 'drivers' | 'products' | 'comments') => {
     if (!newItemText.trim()) return;
     const cleanItem = newItemText.trim().toUpperCase();
     let updated: string[] = [];
@@ -225,16 +266,20 @@ const App: React.FC = () => {
       if (drivers.includes(cleanItem)) return;
       updated = [...drivers, cleanItem];
       setDrivers(updated);
-    } else {
+    } else if (type === 'products') {
       if (products.includes(cleanItem)) return;
       updated = [...products, cleanItem];
       setProducts(updated);
+    } else {
+      if (predefinedComments.includes(cleanItem)) return;
+      updated = [...predefinedComments, cleanItem];
+      setPredefinedComments(updated);
     }
     saveLists(type, updated);
     setNewItemText('');
   };
 
-  const handleDeleteItem = (type: 'suppliers' | 'drivers' | 'products', index: number) => {
+  const handleDeleteItem = (type: 'suppliers' | 'drivers' | 'products' | 'comments', index: number) => {
     let updated: string[] = [];
     if (type === 'suppliers') {
       updated = suppliers.filter((_, i) => i !== index);
@@ -242,9 +287,12 @@ const App: React.FC = () => {
     } else if (type === 'drivers') {
       updated = drivers.filter((_, i) => i !== index);
       setDrivers(updated);
-    } else {
+    } else if (type === 'products') {
       updated = products.filter((_, i) => i !== index);
       setProducts(updated);
+    } else {
+      updated = predefinedComments.filter((_, i) => i !== index);
+      setPredefinedComments(updated);
     }
     saveLists(type, updated);
   };
@@ -259,7 +307,7 @@ const App: React.FC = () => {
     setEditingText('');
   };
 
-  const handleUpdateItem = (type: 'suppliers' | 'drivers' | 'products', index: number) => {
+  const handleUpdateItem = (type: 'suppliers' | 'drivers' | 'products' | 'comments', index: number) => {
     if (!editingText.trim()) return;
     const cleanItem = editingText.trim().toUpperCase();
     let updated: string[] = [];
@@ -267,8 +315,10 @@ const App: React.FC = () => {
       updated = [...suppliers]; updated[index] = cleanItem; setSuppliers(updated);
     } else if (type === 'drivers') {
       updated = [...drivers]; updated[index] = cleanItem; setDrivers(updated);
-    } else {
+    } else if (type === 'products') {
       updated = [...products]; updated[index] = cleanItem; setProducts(updated);
+    } else {
+      updated = [...predefinedComments]; updated[index] = cleanItem; setPredefinedComments(updated);
     }
     saveLists(type, updated);
     setEditingIndex(null);
@@ -280,6 +330,7 @@ const App: React.FC = () => {
       suppliers,
       drivers,
       products,
+      predefinedComments,
       exportedAt: new Date().toISOString()
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -301,9 +352,11 @@ const App: React.FC = () => {
             setSuppliers(json.suppliers);
             setDrivers(json.drivers);
             setProducts(json.products);
+            setPredefinedComments(json.predefinedComments || DEFAULT_LISTS.predefinedComments);
             saveLists('suppliers', json.suppliers);
             saveLists('drivers', json.drivers);
             saveLists('products', json.products);
+            saveLists('comments', json.predefinedComments || DEFAULT_LISTS.predefinedComments);
             alert('Επιτυχής εισαγωγή και επαναφορά των λιστών!');
           }
         } else {
@@ -377,11 +430,9 @@ const App: React.FC = () => {
       let heightLeft = imgHeight;
       let position = 0;
 
-      // Πρώτη σελίδα
       pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
       heightLeft -= pageHeight;
 
-      // Επόμενες σελίδες αν χρειάζονται
       while (heightLeft > 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
@@ -425,6 +476,7 @@ const App: React.FC = () => {
         suppliers={suppliers}
         drivers={drivers}
         products={products}
+        predefinedComments={predefinedComments}
         activeMgmtTab={activeMgmtTab}
         setActiveMgmtTab={setActiveMgmtTab}
         newItemText={newItemText}
@@ -434,7 +486,7 @@ const App: React.FC = () => {
         editingIndex={editingIndex}
         editingText={editingText}
         setEditingText={setEditingText}
-        startEditing={index => startEditing(index, (activeMgmtTab === 'suppliers' ? suppliers[index] : activeMgmtTab === 'drivers' ? drivers[index] : products[index]))}
+        startEditing={(index, currentText) => startEditing(index, currentText)}
         cancelEditing={cancelEditing}
         handleUpdateItem={handleUpdateItem}
         onExport={handleExport}
@@ -449,13 +501,16 @@ const App: React.FC = () => {
         <span className="text-[10px] font-black text-[#003d71] uppercase tracking-[0.2em] leading-none mb-1">ASPIS</span>
         <h1 className="text-xs font-black text-gray-900 uppercase tracking-tight">Bins Damage Reporter</h1>
       </div>
-      <button 
-        onClick={() => setView(AppView.Management)}
-        className="p-2 text-[#003d71] active:bg-blue-50 rounded-full transition-colors"
-        title="Διαχείριση Λιστών"
-      >
-        <Settings size={20} />
-      </button>
+      <div className="flex items-center gap-3">
+        <OnlineStatus />
+        <button 
+          onClick={() => setView(AppView.Management)}
+          className="p-2 text-[#003d71] active:bg-blue-50 rounded-full transition-colors"
+          title="Διαχείριση Λιστών"
+        >
+          <Settings size={20} />
+        </button>
+      </div>
     </header>
   );
 
@@ -465,10 +520,7 @@ const App: React.FC = () => {
         return (
           <>
             <MainHeader />
-            <StepLayout title="ΟΝΟΜΑ ΠΡΟΜΗΘΕΥΤΗ" stepIndex={0} totalSteps={7} onNext={handleNext} isNextDisabled={!formData.supplierName}>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Λίστα Προμηθευτών</span>
-              </div>
+            <StepLayout title="ΟΝΟΜΑ ΠΡΟΜΗΘΕΥΤΗ" stepIndex={0} totalSteps={8} onNext={handleNext} isNextDisabled={!formData.supplierName}>
               <div className="grid grid-cols-1 gap-2 max-h-[50dvh] overflow-y-auto pr-2 custom-scrollbar">
                 {suppliers.map((s, i) => (
                   <button key={i} onClick={() => updateField('supplierName', s)} className={`w-full p-4 rounded-xl text-left font-bold uppercase transition-all flex items-center justify-between border-2 ${formData.supplierName === s ? 'bg-[#003d71] text-white border-[#003d71]' : 'bg-gray-50 text-gray-700 border-transparent active:border-gray-200'}`}>
@@ -484,7 +536,7 @@ const App: React.FC = () => {
         return (
           <>
             <MainHeader />
-            <StepLayout title="ΟΔΗΓΟΣ" stepIndex={1} totalSteps={7} onNext={handleNext} onBack={handleBack} isNextDisabled={!formData.driverName}>
+            <StepLayout title="ΟΔΗΓΟΣ" stepIndex={1} totalSteps={8} onNext={handleNext} onBack={handleBack} isNextDisabled={!formData.driverName}>
               <div className="grid grid-cols-1 gap-2 max-h-[50dvh] overflow-y-auto pr-2 custom-scrollbar">
                 {drivers.map((d, i) => (
                   <button key={i} onClick={() => updateField('driverName', d)} className={`w-full p-4 rounded-xl text-left font-bold uppercase transition-all flex items-center justify-between border-2 ${formData.driverName === d ? 'bg-[#003d71] text-white border-[#003d71]' : 'bg-gray-50 text-gray-700 border-transparent active:border-gray-200'}`}>
@@ -500,7 +552,7 @@ const App: React.FC = () => {
         return (
           <>
             <MainHeader />
-            <StepLayout title="ΠΡΟΪΟΝ" stepIndex={2} totalSteps={7} onNext={handleNext} onBack={handleBack} isNextDisabled={!formData.product}>
+            <StepLayout title="ΠΡΟΪΟΝ" stepIndex={2} totalSteps={8} onNext={handleNext} onBack={handleBack} isNextDisabled={!formData.product}>
               <div className="grid grid-cols-1 gap-2 max-h-[50dvh] overflow-y-auto pr-2 custom-scrollbar">
                 {products.map((p, i) => (
                   <button key={i} onClick={() => updateField('product', p)} className={`w-full p-4 rounded-xl text-left font-bold uppercase transition-all flex items-center justify-between border-2 ${formData.product === p ? 'bg-[#003d71] text-white border-[#003d71]' : 'bg-gray-50 text-gray-700 border-transparent active:border-gray-200'}`}>
@@ -516,7 +568,7 @@ const App: React.FC = () => {
         return (
           <>
             <MainHeader />
-            <StepLayout title="ΣΥΝΟΛΙΚΑ BINS ΠΑΡΤΙΔΑΣ" stepIndex={3} totalSteps={7} onNext={handleNext} onBack={handleBack} isNextDisabled={!formData.totalBins.trim()}>
+            <StepLayout title="ΣΥΝΟΛΙΚΑ BINS ΠΑΡΤΙΔΑΣ" stepIndex={3} totalSteps={8} onNext={handleNext} onBack={handleBack} isNextDisabled={!formData.totalBins.trim()}>
               <input type="number" inputMode="numeric" autoFocus className="w-full text-5xl p-6 border-2 border-gray-100 rounded-2xl focus:border-[#003d71] focus:outline-none text-center font-black bg-gray-50/50" placeholder="0" value={formData.totalBins} onChange={(e) => updateField('totalBins', e.target.value)} />
             </StepLayout>
           </>
@@ -525,7 +577,7 @@ const App: React.FC = () => {
         return (
           <>
             <MainHeader />
-            <StepLayout title="ΣΠΑΣΜΕΝΑ BINS" stepIndex={4} totalSteps={7} onNext={handleNext} onBack={handleBack} isNextDisabled={!formData.brokenBins.trim()}>
+            <StepLayout title="ΣΠΑΣΜΕΝΑ BINS" stepIndex={4} totalSteps={8} onNext={handleNext} onBack={handleBack} isNextDisabled={!formData.brokenBins.trim()}>
               <input type="number" inputMode="numeric" autoFocus className="w-full text-5xl p-6 border-2 border-gray-100 rounded-2xl focus:border-red-600 focus:outline-none text-center font-black text-red-600 bg-gray-50/50" placeholder="0" value={formData.brokenBins} onChange={(e) => updateField('brokenBins', e.target.value)} />
             </StepLayout>
           </>
@@ -534,7 +586,7 @@ const App: React.FC = () => {
         return (
           <>
             <MainHeader />
-            <StepLayout title="ΦΩΤΟΓΡΑΦΙΕΣ ΠΑΡΤΙΔΑΣ" description="Έως 9 λήψεις" stepIndex={5} totalSteps={7} onNext={handleNext} onBack={handleBack}>
+            <StepLayout title="ΦΩΤΟΓΡΑΦΙΕΣ ΠΑΡΤΙΔΑΣ" description="Έως 9 λήψεις" stepIndex={5} totalSteps={8} onNext={handleNext} onBack={handleBack}>
               <div className="grid grid-cols-3 gap-2 mb-4">
                 {formData.photos.map((photo, idx) => (
                   <div key={idx} className="relative aspect-square rounded-xl overflow-hidden shadow-sm border border-gray-100">
@@ -555,6 +607,51 @@ const App: React.FC = () => {
             </StepLayout>
           </>
         );
+      case Step.Comments:
+        return (
+          <>
+            <MainHeader />
+            <StepLayout title="ΣΧΟΛΙΑ" description="Επιλέξτε ή πληκτρολογήστε ελεύθερα" stepIndex={6} totalSteps={8} onNext={handleNext} onBack={handleBack}>
+              <div className="space-y-4">
+                <div className="relative">
+                  <textarea 
+                    rows={3}
+                    className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-[#003d71] focus:outline-none text-sm font-bold placeholder:opacity-30"
+                    placeholder="ΠΛΗΚΤΡΟΛΟΓΗΣΤΕ ΣΧΟΛΙΑ ΕΔΩ..."
+                    value={formData.comments}
+                    onChange={(e) => updateField('comments', e.target.value.toUpperCase())}
+                  />
+                </div>
+                
+                <div className="flex items-center gap-2 px-1">
+                  <div className="h-[1px] flex-1 bg-gray-100" />
+                  <span className="text-[8px] font-black text-gray-300 uppercase tracking-widest">Επιλογες</span>
+                  <div className="h-[1px] flex-1 bg-gray-100" />
+                </div>
+
+                <div className="grid grid-cols-1 gap-2 max-h-[30dvh] overflow-y-auto pr-2 custom-scrollbar">
+                  {predefinedComments.map((c, i) => (
+                    <button 
+                      key={i} 
+                      onClick={() => {
+                        const current = formData.comments.trim();
+                        const next = current ? (current.includes(c) ? current : `${current}, ${c}`) : c;
+                        updateField('comments', next);
+                      }} 
+                      className="w-full p-3.5 rounded-xl text-left font-bold uppercase transition-all bg-gray-50 text-gray-700 border-2 border-transparent active:border-[#003d71] flex items-center gap-3"
+                    >
+                      <Plus size={16} className="text-[#003d71]" />
+                      <span className="text-xs">{c}</span>
+                    </button>
+                  ))}
+                  {predefinedComments.length === 0 && (
+                    <p className="text-center py-4 text-[10px] text-gray-300 font-bold uppercase italic">Δεν υπάρχουν έτοιμα σχόλια</p>
+                  )}
+                </div>
+              </div>
+            </StepLayout>
+          </>
+        );
       case Step.Summary:
         return (
           <div className="flex flex-col min-h-[100dvh] bg-white">
@@ -563,7 +660,10 @@ const App: React.FC = () => {
                   <span className="text-[8px] font-black text-[#003d71] uppercase tracking-[0.2em] leading-none mb-1">ASPIS</span>
                   <h1 className="text-[10px] font-black text-gray-900 uppercase">Summary Report</h1>
                 </div>
-                <button onClick={handleBack} className="text-[11px] font-black text-[#003d71] border-2 border-[#003d71] px-5 py-2.5 rounded-full uppercase tracking-widest active:bg-gray-50 shadow-sm transition-all">Διόρθωση</button>
+                <div className="flex items-center gap-3">
+                  <OnlineStatus />
+                  <button onClick={handleBack} className="text-[11px] font-black text-[#003d71] border-2 border-[#003d71] px-5 py-2.5 rounded-full uppercase tracking-widest active:bg-gray-50 shadow-sm transition-all">Διόρθωση</button>
+                </div>
             </header>
             <main className="flex-1 px-5 pt-6 space-y-6 pb-48">
               <div className="bg-[#003d71] rounded-[2rem] p-6 text-white shadow-xl relative overflow-hidden">
@@ -584,6 +684,12 @@ const App: React.FC = () => {
                       <p className="text-3xl font-black text-red-400">{formData.brokenBins}</p>
                     </div>
                   </div>
+                  {formData.comments && (
+                    <div className="pt-4 border-t border-white/10">
+                      <p className="text-[8px] font-bold opacity-40 uppercase mb-1">Σχόλια</p>
+                      <p className="text-[11px] font-medium italic line-clamp-2">{formData.comments}</p>
+                    </div>
+                  )}
                 </div>
               </div>
               {formData.photos.length > 0 && (

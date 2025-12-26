@@ -6,6 +6,7 @@ export interface BinReportData {
   totalBins: string;
   brokenBins: string;
   photos: string[]; // Base64 strings
+  comments: string;
 }
 
 export enum Step {
@@ -15,7 +16,8 @@ export enum Step {
   TotalBins = 3,
   BrokenBins = 4,
   Photos = 5,
-  Summary = 6
+  Comments = 6,
+  Summary = 7
 }
 
 export enum AppView {

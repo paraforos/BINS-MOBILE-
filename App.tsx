@@ -29,6 +29,107 @@ const DEFAULT_LISTS = {
   products: ['ΣΥΜΠΥΡΗΝΑ', 'ΡΟΔΑΚΙΝΑ', 'ΝΕΚΤΑΡΙΝΙΑ']
 };
 
+interface ManagementViewProps {
+  onBack: () => void;
+  suppliers: string[];
+  drivers: string[];
+  products: string[];
+  activeMgmtTab: 'suppliers' | 'drivers' | 'products';
+  setActiveMgmtTab: (tab: 'suppliers' | 'drivers' | 'products') => void;
+  newItemText: string;
+  setNewItemText: (text: string) => void;
+  handleAddItem: (type: 'suppliers' | 'drivers' | 'products') => void;
+  handleDeleteItem: (type: 'suppliers' | 'drivers' | 'products', index: number) => void;
+  editingIndex: number | null;
+  editingText: string;
+  setEditingText: (text: string) => void;
+  startEditing: (index: number, text: string) => void;
+  cancelEditing: () => void;
+  handleUpdateItem: (type: 'suppliers' | 'drivers' | 'products', index: number) => void;
+}
+
+const ManagementView: React.FC<ManagementViewProps> = ({
+  onBack, suppliers, drivers, products, activeMgmtTab, setActiveMgmtTab,
+  newItemText, setNewItemText, handleAddItem, handleDeleteItem,
+  editingIndex, editingText, setEditingText, startEditing, cancelEditing, handleUpdateItem
+}) => {
+  const currentItems = activeMgmtTab === 'suppliers' ? suppliers : activeMgmtTab === 'drivers' ? drivers : products;
+
+  return (
+    <div className="flex flex-col min-h-[100dvh] bg-gray-50">
+      <header className="px-5 py-4 bg-white border-b flex items-center gap-3 sticky top-0 z-30 shadow-sm">
+        <button onClick={onBack} className="p-2 -ml-2 text-[#003d71] active:bg-gray-100 rounded-full transition-colors">
+          <ArrowLeft size={24} />
+        </button>
+        <h1 className="text-base font-black text-[#003d71] uppercase tracking-tight">Διαχείριση Λιστών</h1>
+      </header>
+      
+      <main className="flex-1 p-4 space-y-4 pb-10">
+        <div className="flex bg-white p-1 rounded-2xl shadow-sm border border-gray-100">
+          {(['suppliers', 'drivers', 'products'] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => { setActiveMgmtTab(tab); setNewItemText(''); cancelEditing(); }}
+              className={`flex-1 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
+                activeMgmtTab === tab ? 'bg-[#003d71] text-white shadow-md' : 'text-gray-400'
+              }`}
+            >
+              {tab === 'suppliers' ? 'Προμηθευτες' : tab === 'drivers' ? 'Οδηγοι' : 'Προϊοντα'}
+            </button>
+          ))}
+        </div>
+
+        <div className="bg-white rounded-[2rem] p-5 shadow-sm border border-gray-100 space-y-4">
+          <div className="flex gap-2">
+            <input 
+              type="text" 
+              className="flex-1 p-4 bg-gray-50 border border-gray-100 rounded-xl focus:outline-none focus:border-[#003d71] uppercase text-sm font-bold"
+              placeholder="Νέα εγγραφή..."
+              value={newItemText}
+              onChange={(e) => setNewItemText(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAddItem(activeMgmtTab)}
+            />
+            <button 
+              onClick={() => handleAddItem(activeMgmtTab)}
+              className="bg-[#003d71] text-white px-5 rounded-xl active:scale-95 transition-transform"
+            >
+              <Plus size={24} />
+            </button>
+          </div>
+
+          <div className="space-y-1.5 max-h-[60dvh] overflow-y-auto pr-1 custom-scrollbar">
+            {currentItems.map((item, idx) => (
+              <div key={idx} className="flex items-center justify-between bg-gray-50 p-3.5 rounded-xl border border-transparent">
+                {editingIndex === idx ? (
+                  <div className="flex-1 flex gap-2 items-center">
+                    <input 
+                      type="text" autoFocus
+                      className="flex-1 p-2 bg-white border border-blue-200 rounded-lg focus:outline-none focus:border-[#003d71] uppercase text-xs font-bold"
+                      value={editingText}
+                      onChange={(e) => setEditingText(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleUpdateItem(activeMgmtTab, idx)}
+                    />
+                    <button onClick={() => handleUpdateItem(activeMgmtTab, idx)} className="text-green-600 p-1.5"><Check size={18} /></button>
+                    <button onClick={cancelEditing} className="text-gray-400 p-1.5"><X size={18} /></button>
+                  </div>
+                ) : (
+                  <>
+                    <span className="text-xs font-bold uppercase truncate pr-2">{item}</span>
+                    <div className="flex gap-0.5">
+                      <button onClick={() => startEditing(idx, item)} className="text-blue-500 p-2 active:bg-blue-50 rounded-lg"><Edit2 size={16} /></button>
+                      <button onClick={() => handleDeleteItem(activeMgmtTab, idx)} className="text-red-400 p-2 active:bg-red-50 rounded-lg"><Trash2 size={16} /></button>
+                    </div>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+};
+
 const App: React.FC = () => {
   const [view, setView] = useState<AppView>(AppView.Reporter);
   const [currentStep, setCurrentStep] = useState<Step>(Step.Supplier);
@@ -49,7 +150,6 @@ const App: React.FC = () => {
 
   // Persistence logic
   useEffect(() => {
-    // Load lists
     const savedSuppliers = localStorage.getItem('aspis_suppliers');
     const savedDrivers = localStorage.getItem('aspis_drivers');
     const savedProducts = localStorage.getItem('aspis_products');
@@ -57,13 +157,11 @@ const App: React.FC = () => {
     setDrivers(savedDrivers ? JSON.parse(savedDrivers) : DEFAULT_LISTS.drivers);
     setProducts(savedProducts ? JSON.parse(savedProducts) : DEFAULT_LISTS.products);
 
-    // Load draft
     const draft = localStorage.getItem('aspis_draft_report');
     if (draft) {
       try {
         const parsedDraft = JSON.parse(draft);
-        // Only restore if it's not totally empty to avoid confusing the user
-        if (parsedDraft.supplierName || parsedDraft.photos?.length > 0) {
+        if (parsedDraft.supplierName || (parsedDraft.photos && parsedDraft.photos.length > 0)) {
           setFormData(parsedDraft);
         }
       } catch(e) {}
@@ -73,7 +171,6 @@ const App: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Save draft whenever formData changes
   useEffect(() => {
     if (formData !== INITIAL_DATA) {
       localStorage.setItem('aspis_draft_report', JSON.stringify(formData));
@@ -202,8 +299,6 @@ const App: React.FC = () => {
       const dateStr = new Date().toLocaleDateString('el-GR').replace(/\//g, '-');
       const cleanSupplier = formData.supplierName.replace(/[^a-z0-9α-ω]/gi, '_').substring(0,10);
       pdf.save(`ASPIS_${cleanSupplier}_${dateStr}.pdf`);
-      
-      // Clear draft after successful PDF generation
       localStorage.removeItem('aspis_draft_report');
     } catch (err) {
       console.error("PDF Error:", err);
@@ -211,81 +306,7 @@ const App: React.FC = () => {
     } finally {
       setIsGenerating(false);
     }
-  }
-
-  const ManagementView = () => (
-    <div className="flex flex-col min-h-[100dvh] bg-gray-50">
-      <header className="px-5 py-4 bg-white border-b flex items-center gap-3 sticky top-0 z-30 shadow-sm">
-        <button onClick={() => { setView(AppView.Reporter); cancelEditing(); }} className="p-2 -ml-2 text-[#003d71] active:bg-gray-100 rounded-full transition-colors">
-          <ArrowLeft size={24} />
-        </button>
-        <h1 className="text-base font-black text-[#003d71] uppercase tracking-tight">Διαχείριση Λιστών</h1>
-      </header>
-      
-      <main className="flex-1 p-4 space-y-4 pb-10">
-        <div className="flex bg-white p-1 rounded-2xl shadow-sm border border-gray-100">
-          {(['suppliers', 'drivers', 'products'] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => { setActiveMgmtTab(tab); setNewItemText(''); cancelEditing(); }}
-              className={`flex-1 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
-                activeMgmtTab === tab ? 'bg-[#003d71] text-white shadow-md' : 'text-gray-400'
-              }`}
-            >
-              {tab === 'suppliers' ? 'Προμηθευτες' : tab === 'drivers' ? 'Οδηγοι' : 'Προϊοντα'}
-            </button>
-          ))}
-        </div>
-
-        <div className="bg-white rounded-[2rem] p-5 shadow-sm border border-gray-100 space-y-4">
-          <div className="flex gap-2">
-            <input 
-              type="text" 
-              className="flex-1 p-4 bg-gray-50 border border-gray-100 rounded-xl focus:outline-none focus:border-[#003d71] uppercase text-sm font-bold"
-              placeholder="Νέα εγγραφή..."
-              value={newItemText}
-              onChange={(e) => setNewItemText(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleAddItem(activeMgmtTab)}
-            />
-            <button 
-              onClick={() => handleAddItem(activeMgmtTab)}
-              className="bg-[#003d71] text-white px-5 rounded-xl active:scale-95 transition-transform"
-            >
-              <Plus size={24} />
-            </button>
-          </div>
-
-          <div className="space-y-1.5 max-h-[60dvh] overflow-y-auto pr-1 custom-scrollbar">
-            {(activeMgmtTab === 'suppliers' ? suppliers : activeMgmtTab === 'drivers' ? drivers : products).map((item, idx) => (
-              <div key={idx} className="flex items-center justify-between bg-gray-50 p-3.5 rounded-xl border border-transparent">
-                {editingIndex === idx ? (
-                  <div className="flex-1 flex gap-2 items-center">
-                    <input 
-                      type="text" autoFocus
-                      className="flex-1 p-2 bg-white border border-blue-200 rounded-lg focus:outline-none focus:border-[#003d71] uppercase text-xs font-bold"
-                      value={editingText}
-                      onChange={(e) => setEditingText(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleUpdateItem(activeMgmtTab, idx)}
-                    />
-                    <button onClick={() => handleUpdateItem(activeMgmtTab, idx)} className="text-green-600 p-1.5"><Check size={18} /></button>
-                    <button onClick={cancelEditing} className="text-gray-400 p-1.5"><X size={18} /></button>
-                  </div>
-                ) : (
-                  <>
-                    <span className="text-xs font-bold uppercase truncate pr-2">{item}</span>
-                    <div className="flex gap-0.5">
-                      <button onClick={() => startEditing(idx, item)} className="text-blue-500 p-2 active:bg-blue-50 rounded-lg"><Edit2 size={16} /></button>
-                      <button onClick={() => handleDeleteItem(activeMgmtTab, idx)} className="text-red-400 p-2 active:bg-red-50 rounded-lg"><Trash2 size={16} /></button>
-                    </div>
-                  </>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </main>
-    </div>
-  );
+  };
 
   if (showSplash) {
     return (
@@ -296,7 +317,28 @@ const App: React.FC = () => {
     );
   }
 
-  if (view === AppView.Management) return <ManagementView />;
+  if (view === AppView.Management) {
+    return (
+      <ManagementView 
+        onBack={() => setView(AppView.Reporter)}
+        suppliers={suppliers}
+        drivers={drivers}
+        products={products}
+        activeMgmtTab={activeMgmtTab}
+        setActiveMgmtTab={setActiveMgmtTab}
+        newItemText={newItemText}
+        setNewItemText={setNewItemText}
+        handleAddItem={handleAddItem}
+        handleDeleteItem={handleDeleteItem}
+        editingIndex={editingIndex}
+        editingText={editingText}
+        setEditingText={setEditingText}
+        startEditing={startEditing}
+        cancelEditing={cancelEditing}
+        handleUpdateItem={handleUpdateItem}
+      />
+    );
+  }
 
   const renderStepContent = () => {
     switch (currentStep) {

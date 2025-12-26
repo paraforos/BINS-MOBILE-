@@ -17,3 +17,8 @@ export enum Step {
   Photos = 5,
   Summary = 6
 }
+
+export enum AppView {
+  Reporter = 'reporter',
+  Management = 'management'
+}

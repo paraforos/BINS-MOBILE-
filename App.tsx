@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera, Trash2, FileText, Loader2, RefreshCcw, Settings, Plus, ArrowLeft, Edit2 } from 'lucide-react';
+import { Camera, Trash2, FileText, Loader2, RefreshCcw, Settings, Plus, ArrowLeft, Edit2, Download, Upload } from 'lucide-react';
 import { BinReportData, Step, AppView } from './types';
 import { compressImage, greekToLatin } from './services/imageService';
 import StepLayout from './components/StepLayout';
@@ -31,6 +31,7 @@ const App: React.FC = () => {
   
   const page1Ref = useRef<HTMLDivElement>(null);
   const page2Ref = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [suppliers, setSuppliers] = useState<string[]>([]);
   const [drivers, setDrivers] = useState<string[]>([]);
@@ -58,6 +59,58 @@ const App: React.FC = () => {
     }
   }, [formData]);
 
+  const handleExport = () => {
+    const backupData = {
+      suppliers,
+      drivers,
+      products,
+      comments: predefinedComments
+    };
+    const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const date = new Date().toISOString().split('T')[0];
+    a.href = url;
+    a.download = `aspis_lists_backup_${date}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const json = JSON.parse(event.target?.result as string);
+        if (json.suppliers) {
+          setSuppliers(json.suppliers);
+          localStorage.setItem('aspis_suppliers', JSON.stringify(json.suppliers));
+        }
+        if (json.drivers) {
+          setDrivers(json.drivers);
+          localStorage.setItem('aspis_drivers', JSON.stringify(json.drivers));
+        }
+        if (json.products) {
+          setProducts(json.products);
+          localStorage.setItem('aspis_products', JSON.stringify(json.products));
+        }
+        if (json.comments) {
+          setPredefinedComments(json.comments);
+          localStorage.setItem('aspis_comments', JSON.stringify(json.comments));
+        }
+        alert('Η εισαγωγή ολοκληρώθηκε επιτυχώς!');
+        window.location.reload();
+      } catch (err) {
+        alert('Σφάλμα: Το αρχείο δεν είναι έγκυρο αρχείο backup.');
+      }
+    };
+    reader.readAsText(file);
+  };
+
   const generatePDF = async () => {
     if (isGenerating) return;
     setIsGenerating(true);
@@ -66,7 +119,6 @@ const App: React.FC = () => {
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF('p', 'mm', 'a4');
       
-      // Page 1
       if (page1Ref.current) {
         const canvas1 = await window.html2canvas(page1Ref.current, { scale: 1.5, logging: false, useCORS: true });
         const img1 = canvas1.toDataURL('image/jpeg', 0.8);
@@ -74,7 +126,6 @@ const App: React.FC = () => {
         canvas1.width = 0; canvas1.height = 0;
       }
 
-      // Page 2
       if (formData.photos.length > 4 && page2Ref.current) {
         pdf.addPage();
         const canvas2 = await window.html2canvas(page2Ref.current, { scale: 1.5, logging: false, useCORS: true });
@@ -104,7 +155,6 @@ const App: React.FC = () => {
       <div className="h-1 w-32 bg-gray-900 rounded-full overflow-hidden">
         <div className="h-full bg-yellow-400 animate-[loading_1.2s_ease-in-out_infinite]" />
       </div>
-      <style>{`@keyframes loading { 0% { width: 0%; } 100% { width: 100%; } }`}</style>
     </div>
   );
 
@@ -143,7 +193,7 @@ const App: React.FC = () => {
              setNewItemText('');
           }} className="bg-black text-white p-4 rounded-2xl active:scale-95 transition-transform"><Plus size={32} /></button>
         </div>
-        <div className="flex-1 overflow-y-auto space-y-2 pb-10 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto space-y-2 custom-scrollbar">
           {(activeMgmtTab === 'suppliers' ? suppliers : activeMgmtTab === 'drivers' ? drivers : activeMgmtTab === 'products' ? products : predefinedComments).map((item, i) => (
             <div key={i} className="p-4 bg-gray-50 rounded-xl border-2 border-gray-100 flex justify-between items-center font-black uppercase text-sm">
               <span className="flex-1 mr-4">{item}</span>
@@ -156,6 +206,16 @@ const App: React.FC = () => {
               }} className="text-red-600 p-2 active:bg-red-50 rounded-lg"><Trash2 size={20} /></button>
             </div>
           ))}
+        </div>
+        
+        <div className="pt-4 mt-auto border-t-2 border-gray-100 grid grid-cols-2 gap-3">
+          <input type="file" ref={fileInputRef} className="hidden" accept=".json" onChange={handleImport} />
+          <button onClick={handleExport} className="flex items-center justify-center gap-2 py-4 bg-gray-50 text-black border-2 border-gray-200 rounded-2xl font-black uppercase text-[10px] tracking-widest active:bg-gray-200">
+            <Download size={16} /> BACKUP (EXPORT)
+          </button>
+          <button onClick={() => fileInputRef.current?.click()} className="flex items-center justify-center gap-2 py-4 bg-gray-50 text-black border-2 border-gray-200 rounded-2xl font-black uppercase text-[10px] tracking-widest active:bg-gray-200">
+            <Upload size={16} /> RESTORE (IMPORT)
+          </button>
         </div>
       </main>
     </div>

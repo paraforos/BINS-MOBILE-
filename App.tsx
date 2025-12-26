@@ -390,15 +390,27 @@ const App: React.FC = () => {
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
+    
     const remainingSlots = 9 - formData.photos.length;
     const filesToProcess = Array.from(files).slice(0, remainingSlots) as File[];
+    
     setIsUploading(true);
     try {
-      const compressedPhotos = await Promise.all(filesToProcess.map(file => compressImage(file)));
-      setFormData(prev => ({ ...prev, photos: [...prev.photos, ...compressedPhotos] }));
+      // Επεξεργασία διαδοχική (Sequential) αντί για παράλληλη (Parallel)
+      // Αυτό αποτρέπει την υπερφόρτωση της RAM σε κινητά
+      const processedPhotos: string[] = [];
+      for (const file of filesToProcess) {
+        const compressed = await compressImage(file);
+        processedPhotos.push(compressed);
+      }
+      
+      setFormData(prev => ({ 
+        ...prev, 
+        photos: [...prev.photos, ...processedPhotos] 
+      }));
     } catch (err) {
       console.error("Compression error:", err);
-      alert("Σφάλμα στην επεξεργασία εικόνων.");
+      alert("Σφάλμα στην επεξεργασία εικόνων. Δοκιμάστε να ανεβάσετε λιγότερες φωτογραφίες ταυτόχρονα.");
     } finally {
       setIsUploading(false);
       e.target.value = '';
@@ -425,7 +437,7 @@ const App: React.FC = () => {
       const imgWidth = 210; // A4 mm width
       const pageHeight = 297; // A4 mm height
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      const imgData = canvas.toDataURL('image/jpeg', 0.85);
+      const imgData = canvas.toDataURL('image/jpeg', 0.8); // 0.8 quality for PDF
       
       let heightLeft = imgHeight;
       let position = 0;

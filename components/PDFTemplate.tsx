@@ -22,7 +22,6 @@ const PDFTemplate: React.FC<PDFTemplateProps> = ({ data, reportRef }) => {
           <Logo className="h-20 w-auto" />
           <div className="text-right">
             <h1 className="text-xl font-black text-[#003d71] uppercase">ΑΝΑΦΟΡΑ ΣΠΑΣΜΕΝΩΝ BINS</h1>
-            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">DOCUMENT ID: ASP-{Date.now().toString(36).toUpperCase()}</p>
           </div>
         </div>
 
@@ -82,14 +81,10 @@ const PDFTemplate: React.FC<PDFTemplateProps> = ({ data, reportRef }) => {
           </div>
         </div>
 
-        {/* Signatures / Footer */}
-        <div className="mt-12 pt-8 border-t border-gray-100 flex justify-between items-end">
-          <div className="text-[8px] text-gray-400 space-y-1">
-            <p className="font-bold uppercase">ASPIS S.A. QUALITY ASSURANCE SYSTEM</p>
+        {/* Footer */}
+        <div className="mt-12 pt-8 border-t border-gray-100 flex justify-center items-end">
+          <div className="text-[10px] text-gray-400 text-center font-medium">
             <p>Η ΑΝΑΦΟΡΑ ΣΤΑΛΘΗΚΕ ΑΠΟ agronomist@aspis.gr</p>
-          </div>
-          <div className="w-40 border-t border-gray-300 pt-1 text-center">
-            <p className="text-[8px] font-bold text-gray-400 uppercase">ΥΠΟΓΡΑΦΗ ΕΛΕΓΚΤΗ</p>
           </div>
         </div>
       </div>

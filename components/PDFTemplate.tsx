@@ -10,8 +10,6 @@ interface PDFTemplateProps {
 
 const PDFTemplate: React.FC<PDFTemplateProps> = ({ data, reportRef }) => {
   const today = new Date().toLocaleDateString('el-GR');
-
-  // Ομαδοποίηση φωτογραφιών ανά 4 για να διατηρήσουμε το όριο ανά σελίδα
   const photoGroups = [];
   for (let i = 0; i < data.photos.length; i += 4) {
     photoGroups.push(data.photos.slice(i, i + 4));
@@ -22,90 +20,61 @@ const PDFTemplate: React.FC<PDFTemplateProps> = ({ data, reportRef }) => {
       <div 
         ref={reportRef} 
         className="bg-white w-[794px] min-h-[1123px] flex flex-col font-sans"
-        style={{ color: 'black', padding: '30px 45px' }}
+        style={{ color: 'black', padding: '40px 50px' }}
       >
-        {/* Header - Very Compact */}
-        <div className="flex justify-between items-baseline mb-1">
-          <Logo className="h-8 w-auto text-black" />
-          <h1 className="text-[14px] font-black uppercase tracking-tight text-black">ΑΝΑΦΟΡΑ ΣΠΑΣΜΕΝΩΝ BINS</h1>
+        <div className="flex justify-between items-end mb-2">
+          <Logo className="h-12 w-auto" />
+          <h1 className="text-[14px] font-black uppercase tracking-tight">ΑΝΑΦΟΡΑ ΣΠΑΣΜΕΝΩΝ BINS</h1>
         </div>
+        <div className="h-[3px] w-full bg-black mb-8" />
 
-        <div className="h-[1.5px] w-full bg-black mb-4" />
-
-        {/* Info Section - Smaller fonts to prevent character cutoff */}
-        <div className="grid grid-cols-2 gap-x-8 gap-y-2.5 mb-2">
-          <div className="border-b border-gray-100 pb-0.5 flex flex-col">
-            <p className="text-[7px] font-bold uppercase tracking-widest text-black mb-0 leading-none">ΠΡΟΜΗΘΕΥΤΗΣ</p>
-            <p className="text-[11px] font-bold uppercase leading-snug break-words mt-0.5 text-black">{data.supplierName || '-'}</p>
+        <div className="grid grid-cols-2 gap-x-12 gap-y-6 mb-10">
+          {[
+            { label: 'ΠΡΟΜΗΘΕΥΤΗΣ', val: data.supplierName },
+            { label: 'ΗΜΕΡΟΜΗΝΙΑ', val: today },
+            { label: 'ΟΔΗΓΟΣ', val: data.driverName },
+            { label: 'ΠΡΟΪΟΝ', val: data.product }
+          ].map((item, i) => (
+            <div key={i} className="border-b border-gray-200 pb-2">
+              <p className="text-[9px] font-black text-gray-400 mb-1">{item.label}</p>
+              <p className="text-[14px] font-black uppercase">{item.val || '-'}</p>
+            </div>
+          ))}
+          <div className="bg-gray-50 p-4 rounded-xl">
+            <p className="text-[9px] font-black text-gray-400 mb-1 uppercase">ΣΥΝΟΛΙΚΑ BINS ΠΑΡΤΙΔΑΣ</p>
+            <p className="text-[28px] font-black leading-none">{data.totalBins || '0'}</p>
           </div>
-          <div className="border-b border-gray-100 pb-0.5 flex flex-col">
-            <p className="text-[7px] font-bold uppercase tracking-widest text-black mb-0 leading-none">ΗΜΕΡΟΜΗΝΙΑ</p>
-            <p className="text-[11px] font-bold leading-snug mt-0.5 text-black">{today}</p>
-          </div>
-          <div className="border-b border-gray-100 pb-0.5 flex flex-col">
-            <p className="text-[7px] font-bold uppercase tracking-widest text-black mb-0 leading-none">ΟΔΗΓΟΣ</p>
-            <p className="text-[11px] font-bold uppercase leading-snug break-words mt-0.5 text-black">{data.driverName || '-'}</p>
-          </div>
-          <div className="border-b border-gray-100 pb-0.5 flex flex-col">
-            <p className="text-[7px] font-bold uppercase tracking-widest text-black mb-0 leading-none">ΠΡΟΪΟΝ</p>
-            <p className="text-[11px] font-bold uppercase leading-snug break-words mt-0.5 text-black">{data.product || '-'}</p>
-          </div>
-          <div className="border-b border-gray-100 pb-0.5 flex flex-col">
-            <p className="text-[7px] font-bold uppercase tracking-widest text-black mb-0 leading-none">ΣΥΝΟΛΙΚΑ BINS ΠΑΡΤΙΔΑΣ</p>
-            <p className="text-[18px] font-black leading-none mt-1 text-black">{data.totalBins || '0'}</p>
-          </div>
-          <div className="border-b border-gray-100 pb-0.5 flex flex-col">
-            <p className="text-[7px] font-bold uppercase tracking-widest text-black mb-0 leading-none">ΣΥΝΟΛΟ ΣΠΑΣΜΕΝΩΝ BINS</p>
-            <p className="text-[18px] font-black text-black leading-none mt-1">{data.brokenBins || '0'}</p>
+          <div className="bg-red-50 p-4 rounded-xl">
+            <p className="text-[9px] font-black text-red-400 mb-1 uppercase">ΣΥΝΟΛΟ ΣΠΑΣΜΕΝΩΝ</p>
+            <p className="text-[28px] font-black text-red-600 leading-none">{data.brokenBins || '0'}</p>
           </div>
         </div>
 
-        {/* Comments Section - Full Width row */}
-        <div className="border-b border-gray-100 pb-1 mb-5 flex flex-col">
-          <p className="text-[7px] font-bold uppercase tracking-widest text-black mb-0 leading-none">ΣΧΟΛΙΑ / ΠΑΡΑΤΗΡΗΣΕΙΣ</p>
-          <p className="text-[10px] font-medium leading-snug mt-1 text-black italic">
+        <div className="border-2 border-gray-100 p-5 rounded-2xl mb-10 bg-gray-50/30">
+          <p className="text-[9px] font-black text-gray-400 mb-2 uppercase">ΣΧΟΛΙΑ / ΠΑΡΑΤΗΡΗΣΕΙΣ</p>
+          <p className="text-[12px] font-bold leading-relaxed italic">
             {data.comments || 'Δεν υπάρχουν σχόλια.'}
           </p>
         </div>
 
-        {/* Photos Layout */}
         <div className="flex-1">
-          <h2 className="text-[8px] font-black uppercase mb-3 tracking-widest text-black">ΦΩΤΟΓΡΑΦΙΕΣ ΠΑΡΤΙΔΑΣ</h2>
-          
-          <div className="space-y-6">
+          <h2 className="text-[11px] font-black uppercase mb-6 tracking-widest border-l-4 border-black pl-4">ΦΩΤΟΓΡΑΦΙΕΣ ΤΕΚΜΗΡΙΩΣΗΣ</h2>
+          <div className="space-y-10">
             {photoGroups.map((group, gIndex) => (
-              <div 
-                key={gIndex} 
-                className="grid grid-cols-2 gap-4" 
-                style={{ breakInside: 'avoid', pageBreakInside: 'avoid', marginBottom: '15px' }}
-              >
+              <div key={gIndex} className="grid grid-cols-2 gap-6" style={{ breakInside: 'avoid' }}>
                 {group.map((photo, pIndex) => (
-                  <div 
-                    key={pIndex} 
-                    className="aspect-[4/3] w-full bg-white border border-gray-100 rounded-sm overflow-hidden flex items-center justify-center"
-                    style={{ breakInside: 'avoid' }}
-                  >
-                    <img 
-                      src={photo} 
-                      className="max-w-full max-h-full object-contain" 
-                      alt="Bin Damage" 
-                    />
+                  <div key={pIndex} className="aspect-[4/3] rounded-xl overflow-hidden border border-gray-200">
+                    <img src={photo} className="w-full h-full object-cover" alt="Damage" />
                   </div>
                 ))}
               </div>
             ))}
           </div>
-
-          {data.photos.length === 0 && (
-            <div className="py-8 text-center border border-dashed border-gray-100 rounded-md">
-              <p className="text-[9px] uppercase font-bold text-black opacity-30 tracking-widest">Δεν υπάρχουν συνημμένες φωτογραφίες</p>
-            </div>
-          )}
         </div>
 
-        {/* Footer - Minimalist & Black */}
-        <div className="mt-6 pt-4 border-t border-gray-100 text-center">
-          <p className="text-[10px] text-black font-bold lowercase">στάλθηκε από agronomist@aspis.gr</p>
+        <div className="mt-12 pt-6 border-t border-gray-100 flex justify-between items-center">
+          <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">ASPIS BINS DAMAGE REPORTER</p>
+          <p className="text-[6px] text-gray-300 font-bold lowercase italic">στάλθηκε από agronomist@aspis.gr</p>
         </div>
       </div>
     </div>

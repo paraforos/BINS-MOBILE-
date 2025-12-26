@@ -363,28 +363,25 @@ const App: React.FC = () => {
         scale: 2, 
         useCORS: true, 
         logging: false, 
-        backgroundColor: '#ffffff',
-        onclone: (clonedDoc) => {
-          // You can apply specific styles to the cloned document here if needed
-        }
+        backgroundColor: '#ffffff'
       });
       
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
       
-      const imgWidth = 210; // A4 mm
-      const pageHeight = 297; // A4 mm
+      const imgWidth = 210; // A4 mm width
+      const pageHeight = 297; // A4 mm height
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       const imgData = canvas.toDataURL('image/jpeg', 0.85);
       
       let heightLeft = imgHeight;
       let position = 0;
 
-      // Add the first page
+      // Πρώτη σελίδα
       pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
       heightLeft -= pageHeight;
 
-      // Add extra pages if the content is long
+      // Επόμενες σελίδες αν χρειάζονται
       while (heightLeft > 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();

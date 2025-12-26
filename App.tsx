@@ -384,8 +384,18 @@ const App: React.FC = () => {
   if (showSplash) {
     return (
       <div className="fixed inset-0 bg-white flex flex-col items-center justify-center">
-        <Logo className="scale-125 mb-4" />
-        <Loader2 className="animate-spin text-[#003d71]" size={24} />
+        <div className="flex flex-col items-center">
+          <Logo className="scale-125 mb-4" />
+          <Loader2 className="animate-spin text-[#003d71] mb-12" size={24} />
+        </div>
+        <div className="absolute bottom-12 text-center px-4 w-full">
+          <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">
+            © 2025 Michalis Paraforos
+          </p>
+          <p className="text-[7px] font-bold text-gray-300 uppercase tracking-[0.2em] mt-1">
+            Αναφορά Σπασμένων Bins
+          </p>
+        </div>
       </div>
     );
   }
